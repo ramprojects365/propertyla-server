@@ -1,0 +1,86 @@
+﻿node : (node:16580) 
+NOTE: The AWS SDK for 
+JavaScript (v2) is in 
+maintenance mode.
+At line:1 char:1
++ node dist/server.js 
+> server_err.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: ((node:1658   
+ 0) NO...intenance    
+ mode.:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+ SDK releases are 
+limited to address 
+critical bug fixes 
+and security issues 
+only.
+
+Please migrate your 
+code to use AWS SDK 
+for JavaScript (v3).
+For more information, 
+check the blog post 
+at 
+https://a.co/cUPnyil
+(Use `node 
+--trace-warnings ...` 
+to show where the 
+warning was created)
+Database connection established successfully
+node:events:502
+      throw er; // 
+Unhandled 'error' 
+event
+      ^
+
+Error: listen 
+EADDRINUSE: address 
+already in use :::3008
+    at Server.setupLis
+tenHandle [as 
+_listen2] 
+(node:net:1912:16)
+    at 
+listenInCluster 
+(node:net:1969:12)
+    at Server.listen 
+(node:net:2074:7)
+    at 
+Function.listen (C:\Us
+ers\HP\Desktop\propert
+yla\propertyla_be\node
+_modules\express\lib\a
+pplication.js:635:24)
+    at startServer (fi
+le:///C:/Users/HP/Desk
+top/propertyla/propert
+yla_be/dist/server.js:
+68:13)
+    at process.process
+TicksAndRejections (no
+de:internal/process/ta
+sk_queues:105:5)
+Emitted 'error' event 
+on Server instance at:
+    at emitErrorNT 
+(node:net:1948:8)
+    at process.process
+TicksAndRejections (no
+de:internal/process/ta
+sk_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3008
+}
+
+Node.js v22.12.0
