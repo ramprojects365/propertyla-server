@@ -309,7 +309,6 @@ export const verifyOTP = async (userId: string, code: string) => {
     emailVerified: updatedUser.emailVerified
   };
 };
-
 export const verifyOtpByEmail = async (
   email: string,
   code: string
@@ -330,16 +329,18 @@ export const verifyOtpByEmail = async (
     } as ServiceError;
   }
 
-const otpMatch = await userRepository.findValidOTP(user.id, "123456");
+  // ✅ FIXED HERE
+  const otpMatch = await userRepository.findValidOTP(user.id, code);
+
   if (!otpMatch) {
     throw {
       status: 400,
       message: 'Invalid or expired OTP'
     } as ServiceError;
-    
   }
 
   const updatedUser = await userRepository.updateUserEmailVerification(user.id);
+
   const token = generateJWTToken(updatedUser.id, updatedUser.email);
 
   return {
