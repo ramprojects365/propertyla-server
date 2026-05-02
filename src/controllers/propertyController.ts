@@ -112,6 +112,16 @@ export const getPropertyById = async (req: Request, res: Response): Promise<void
 
 export const getAllProperties = async (req: Request, res: Response): Promise<void> => {
   try {
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+      return;
+    }
+
     const filters = {
       listingType: req.query.listingType as 'rent' | 'sale' | undefined,
       propertyType: req.query.propertyType as string | undefined,
@@ -125,6 +135,7 @@ export const getAllProperties = async (req: Request, res: Response): Promise<voi
       cityName: req.query.cityName as string | undefined,
       state: req.query.state as string | undefined,
       status: 'active' as string | undefined,
+      userId,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
       minBedrooms: req.query.minBedrooms ? parseInt(req.query.minBedrooms as string) : undefined,
@@ -138,7 +149,7 @@ export const getAllProperties = async (req: Request, res: Response): Promise<voi
       swimmingPool: req.query.swimmingPool === 'true' ? true : undefined,
       gymnasium: req.query.gymnasium === 'true' ? true : undefined,
       coveredParking: req.query.coveredParking === 'true' ? true : undefined,
-      security24h: req.query.security24h === 'true' ? true : undefined    
+      security24h: req.query.security24h === 'true' ? true : undefined
     };
 
     const properties = await propertyService.getAllProperties(filters);
