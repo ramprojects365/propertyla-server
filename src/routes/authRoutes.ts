@@ -1,5 +1,5 @@
 import express from 'express';
-import { body } from 'express-validator';
+import { body, oneOf } from 'express-validator';
 import { register, login, getProfile, updateProfile, changePassword, verifyEmail, verifyOTP } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -13,14 +13,23 @@ router.post(
       .trim()
       .isLength({ min: 3, max: 30 })
       .withMessage('Username must be between 3 and 30 characters'),
-     body('email')
+    body('user_name')
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 30 })
+      .withMessage('Username must be between 3 and 30 characters'),
+    body('email')
       .trim()
       .isEmail()
       .withMessage('Invalid email address')
       .normalizeEmail(),
     body('phone_number')
-      .optional()
-      .optional()
+      .optional({ nullable: true })
+      .trim()
+      .matches(/^\+?[1-9]\d{1,14}$/)
+      .withMessage('Invalid phone number format'),
+    body('phoneNumber')
+      .optional({ nullable: true })
       .trim()
       .matches(/^\+?[1-9]\d{1,14}$/)
       .withMessage('Invalid phone number format'),
@@ -79,7 +88,17 @@ router.put(
       .trim()
       .isLength({ min: 3, max: 30 })
       .withMessage('Username must be between 3 and 30 characters'),
+    body('user_name')
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 30 })
+      .withMessage('Username must be between 3 and 30 characters'),
     body('phone_number')
+      .optional({ nullable: true })
+      .trim()
+      .matches(/^\+?[1-9]\d{1,14}$/)
+      .withMessage('Invalid phone number format'),
+    body('phoneNumber')
       .optional({ nullable: true })
       .trim()
       .matches(/^\+?[1-9]\d{1,14}$/)

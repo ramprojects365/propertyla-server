@@ -28,7 +28,9 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     }
 
     // Map frontend field names → DB field names
-    const { fullName, aboutYou, companyName, icPassport, designation, experience, username, phoneNumber } = req.body;
+    const { fullName, aboutYou, companyName, icPassport, designation, experience, username: usernameField, user_name, phoneNumber, phone_number } = req.body;
+    const username = usernameField ?? user_name;
+    const phone = phoneNumber ?? phone_number;
 
     const updates: Record<string, any> = {};
     if (fullName !== undefined)    updates.fullName = fullName || null;
@@ -38,7 +40,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     if (designation !== undefined) updates.designation = designation || null;
     if (experience !== undefined)  updates.experienceYears = experience ? Number(experience) : null;
     if (username !== undefined)    updates.username = username;
-    if (phoneNumber !== undefined) updates.phoneNumber = phoneNumber || null;
+    if (phone !== undefined)       updates.phoneNumber = phone || null;
 
     const user = await authService.updateUserProfile(req.user!.id, updates);
 

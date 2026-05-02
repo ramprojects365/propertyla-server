@@ -14,12 +14,22 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { username, email, phone_number, password } = req.body;
+    const { username: usernameField, user_name, email, phone_number, phoneNumber, password } = req.body;
+    const username = usernameField ?? user_name;
+    const phone = phone_number ?? phoneNumber;
+
+    if (!username) {
+      res.status(400).json({
+        success: false,
+        errors: [{ msg: 'Username must be provided', param: 'username', location: 'body' }]
+      });
+      return;
+    }
 
     const result = await authService.registerUser({
       username,
       email,
-      phoneNumber: phone_number,
+      phoneNumber: phone,
       password
     });
 
@@ -113,11 +123,13 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const { username, phone_number, full_name, bio, company_name, ic_passport, designation, experience_years } = req.body;
+    const { username: usernameField, user_name, phone_number, phoneNumber, full_name, bio, company_name, ic_passport, designation, experience_years } = req.body;
+    const username = usernameField ?? user_name;
+    const phone = phone_number ?? phoneNumber;
 
     const updates: Record<string, any> = {};
     if (username !== undefined) updates.username = username;
-    if (phone_number !== undefined) updates.phoneNumber = phone_number || null;
+    if (phone !== undefined) updates.phoneNumber = phone || null;
     if (full_name !== undefined) updates.fullName = full_name || null;
     if (bio !== undefined) updates.bio = bio || null;
     if (company_name !== undefined) updates.companyName = company_name || null;
