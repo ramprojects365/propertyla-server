@@ -2,7 +2,7 @@
 
 A complete registration and login system with JWT authentication, email verification, and password hashing using native PostgreSQL.
 
-## Features
+## Features 
 
 - User registration with username, email, phone number, and password
 - Password hashing using bcrypt
