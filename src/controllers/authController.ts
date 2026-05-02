@@ -211,21 +211,12 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
 };
 export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({
-        success: false,
-        errors: errors.array()
-      });
-      return;
-    }
-
     const { email, otp } = req.body;
 
-    if (!email) {
+    if (!email || !otp) {
       res.status(400).json({
         success: false,
-        message: "Email is required"
+        message: 'Email and OTP required'
       });
       return;
     }
@@ -234,14 +225,14 @@ export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json({
       success: true,
-      message: "OTP verified successfully",
+      message: 'OTP verified successfully',
       data: result
     });
 
   } catch (error: any) {
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || "Internal server error"
+      message: error.message || 'Server error'
     });
   }
 };

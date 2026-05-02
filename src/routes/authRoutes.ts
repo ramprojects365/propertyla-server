@@ -62,20 +62,21 @@ router.post('/verify-email', verifyEmail);
 router.post(
   '/verify-otp',
   [
-    body('email')
-      .notEmpty()
-      .withMessage('Email is required')
-      .trim()
-      .isEmail()
-      .withMessage('Invalid email address')
-      .normalizeEmail(),
     body('otp')
       .notEmpty()
       .withMessage('OTP is required')
       .isLength({ min: 6, max: 6 })
-      .withMessage('OTP must be 6 digits')
-      .matches(/^\d{6}$/)
-      .withMessage('OTP must be 6 digits')
+      .matches(/^\d{6}$/),
+
+    body('email')
+      .optional()
+      .isEmail()
+      .withMessage('Invalid email address'),
+
+    body('user_id')
+      .optional()
+      .isUUID()
+      .withMessage('Invalid user id')
   ],
   verifyOTP
 );

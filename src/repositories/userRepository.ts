@@ -12,21 +12,19 @@ const getUserRepository = (): Repository<User> => {
   return userRepository;
 };
 
-export const findValidOTP = async (
-  userId: string,
-  otp: string
-): Promise<boolean> => {
+export const findValidOTP = async (userId: string, otp: string): Promise<boolean> => {
   const repository = getUserRepository();
 
   const user = await repository.findOne({
     where: {
       id: userId,
-      otp: String(otp) // ✅ normalize type
-    },
-    select: ['id']
+      otp
+    }
   });
 
-  return !!user;
+  if (!user) return false;
+
+  return true;
 };
 
 export const createUser = async (userData: UserRepositoryData): Promise<User> => {
