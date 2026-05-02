@@ -69,7 +69,7 @@ export const registerUser = async (registrationData: RegistrationData) => {
   // const otp = generateOTP();
  const otp =
   process.env.USE_FIXED_OTP === "true"
-    ? process.env.FIXED_OTP || "1234"
+    ? process.env.FIXED_OTP || "123456"
     : generateOTP();
 
   const newUser = await userRepository.createUser({
