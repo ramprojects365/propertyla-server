@@ -1,32 +1,85 @@
-import { Resend } from "resend";
+import nodemailer, { Transporter } from 'nodemailer';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let transporter: Transporter | null = null;
 
-const buildOtpEmailHtml = (username: string, otp: string): string => {
-  return `
-    <h2>Hi ${username},</h2>
-    <p>Your PropertyLA verification code is:</p>
-    <h1 style="letter-spacing:5px;">${otp}</h1>
-    <p>If you didn't request this, ignore this email.</p>
-  `;
+const getTransporter = (): Transporter => {
+  if (transporter) return transporter;
+
+  const host = process.env.MAIL_HOST;
+  const port = process.env.MAIL_PORT;
+  const user = process.env.MAIL_USER;
+  const pass = process.env.MAIL_PASS;
+
+  if (!host || !port || !user || !pass) {
+    throw new Error('Mail configuration missing: MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS are required');
+  }
+
+  transporter = nodemailer.createTransport({
+    host,
+    port: Number(port),
+    secure: Number(port) === 465,
+    auth: { user, pass }
+  });
+
+  return transporter;
 };
 
-export const sendOtpEmail = async (
-  to: string,
-  username: string,
-  otp: string
-): Promise<void> => {
-  try {
-    const response = await resend.emails.send({
-      from: "PropertyLA <onboarding@resend.dev>", // ✅ MUST use this for now
-      to,
-      subject: "Your PropertyLA verification code",
-      html: buildOtpEmailHtml(username, otp),
-    });
+const buildOtpEmailHtml = (username: string, otp: string): string => {
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Verify your PropertyLA account</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;color:#222;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:32px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden;">
+            <tr>
+              <td style="background:#0d6efd;padding:24px 32px;color:#ffffff;">
+                <h1 style="margin:0;font-size:22px;font-weight:600;">PropertyLA</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <h2 style="margin:0 0 16px;font-size:20px;color:#111;">Verify your email</h2>
+                <p style="margin:0 0 16px;line-height:1.5;">Hi ${username},</p>
+                <p style="margin:0 0 24px;line-height:1.5;">
+                  Thanks for signing up. Use the one-time code below to verify your email address and activate your account.
+                </p>
+                <div style="text-align:center;margin:24px 0;">
+                  <span style="display:inline-block;font-size:32px;letter-spacing:8px;font-weight:700;color:#0d6efd;background:#eef4ff;padding:16px 24px;border-radius:6px;">
+                    ${otp}
+                  </span>
+                </div>
+                <p style="margin:0 0 16px;line-height:1.5;color:#555;font-size:14px;">
+                  If you didn't request this, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f0f2f5;padding:16px 32px;color:#888;font-size:12px;text-align:center;">
+                &copy; ${new Date().getFullYear()} PropertyLA. All rights reserved.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+};
 
-    console.log("Email sent:", response);
-  } catch (error) {
-    console.error("Email error:", error);
-    throw error;
-  }
+export const sendOtpEmail = async (to: string, username: string, otp: string): Promise<void> => {
+  const from = process.env.MAIL_FROM || process.env.MAIL_USER;
+  const t = getTransporter();
+
+  await t.sendMail({
+    from,
+    to,
+    subject: 'Your PropertyLA verification code',
+    text: `Hi ${username},\n\nYour PropertyLA verification code is: ${otp}\n\nIf you didn't request this, you can ignore this email.`,
+    html: buildOtpEmailHtml(username, otp)
+  });
 };
