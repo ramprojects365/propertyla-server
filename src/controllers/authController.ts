@@ -222,26 +222,26 @@ export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
 
     const { email, otp } = req.body;
 
-    const result = await authService.verifyOtpByEmail(email, otp);
-
-    res.status(200).json({
-      success: true,
-      message: 'OTP verified successfully. Your account is now active.',
-      data: result
-    });
-  } catch (error: any) {
-    if (error.status) {
-      res.status(error.status).json({
+    if (!email) {
+      res.status(400).json({
         success: false,
-        message: error.message
+        message: "Email is required"
       });
       return;
     }
 
-    console.error('OTP verification error:', error);
-    res.status(500).json({
+    const result = await authService.verifyOtpByEmail(email, otp);
+
+    res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+      data: result
+    });
+
+  } catch (error: any) {
+    res.status(error.status || 500).json({
       success: false,
-      message: 'Internal server error'
+      message: error.message || "Internal server error"
     });
   }
 };
