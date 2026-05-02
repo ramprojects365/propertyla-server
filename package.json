@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node dist/server.js",
+    "start": "node dist/server.js",
     "start:typeorm": "npm run build && node dist/server.js",
-    "dev": "npm run build && node --watch dist/server.js",
+    "dev": "tsc && node --watch dist/server.js",
     "dev:typeorm": "npm run build && node --watch dist/server.js",
     "setup-db": "node scripts/setup-db.js",
     "test": "node test-api.js"
@@ -41,7 +41,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.12.2",
     "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.15.6",
     "typescript": "^5.9.3"
