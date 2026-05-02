@@ -66,7 +66,11 @@ export const registerUser = async (registrationData: RegistrationData) => {
   const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   const verificationToken = generateVerificationToken();
   const verificationExpiry = calculateVerificationExpiry();
-  const otp = generateOTP();
+  // const otp = generateOTP();
+ const otp =
+  process.env.USE_FIXED_OTP === "true"
+    ? process.env.FIXED_OTP || "1234"
+    : generateOTP();
 
   const newUser = await userRepository.createUser({
     username,
