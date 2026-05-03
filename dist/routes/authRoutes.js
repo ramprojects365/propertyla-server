@@ -5,6 +5,12 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 router.post('/register', [
     body('username')
+        .optional()
+        .trim()
+        .isLength({ min: 3, max: 30 })
+        .withMessage('Username must be between 3 and 30 characters'),
+    body('user_name')
+        .optional()
         .trim()
         .isLength({ min: 3, max: 30 })
         .withMessage('Username must be between 3 and 30 characters'),
@@ -14,7 +20,12 @@ router.post('/register', [
         .withMessage('Invalid email address')
         .normalizeEmail(),
     body('phone_number')
-        .optional()
+        .optional({ nullable: true })
+        .trim()
+        .matches(/^\+?[1-9]\d{1,14}$/)
+        .withMessage('Invalid phone number format'),
+    body('phoneNumber')
+        .optional({ nullable: true })
         .trim()
         .matches(/^\+?[1-9]\d{1,14}$/)
         .withMessage('Invalid phone number format'),
@@ -36,18 +47,19 @@ router.post('/login', [
 ], login);
 router.post('/verify-email', verifyEmail);
 router.post('/verify-otp', [
-    body('email')
-        .trim()
-        .isEmail()
-        .withMessage('Invalid email address')
-        .normalizeEmail(),
     body('otp')
-        .isString()
+        .notEmpty()
         .withMessage('OTP is required')
         .isLength({ min: 6, max: 6 })
-        .withMessage('OTP must be 6 digits')
-        .matches(/^\d{6}$/)
-        .withMessage('OTP must be 6 digits')
+        .matches(/^\d{6}$/),
+    body('email')
+        .optional()
+        .isEmail()
+        .withMessage('Invalid email address'),
+    body('user_id')
+        .optional()
+        .isUUID()
+        .withMessage('Invalid user id')
 ], verifyOTP);
 router.get('/profile', authenticateToken, getProfile);
 router.put('/profile', authenticateToken, [
@@ -56,7 +68,17 @@ router.put('/profile', authenticateToken, [
         .trim()
         .isLength({ min: 3, max: 30 })
         .withMessage('Username must be between 3 and 30 characters'),
+    body('user_name')
+        .optional()
+        .trim()
+        .isLength({ min: 3, max: 30 })
+        .withMessage('Username must be between 3 and 30 characters'),
     body('phone_number')
+        .optional({ nullable: true })
+        .trim()
+        .matches(/^\+?[1-9]\d{1,14}$/)
+        .withMessage('Invalid phone number format'),
+    body('phoneNumber')
         .optional({ nullable: true })
         .trim()
         .matches(/^\+?[1-9]\d{1,14}$/)

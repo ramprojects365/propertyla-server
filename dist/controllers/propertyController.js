@@ -110,7 +110,7 @@ export const getAllProperties = async (req, res) => {
             availability: req.query.availability,
             cityName: req.query.cityName,
             state: req.query.state,
-            status: req.query.status,
+            status: req.query.state,
             minPrice: req.query.minPrice ? parseFloat(req.query.minPrice) : undefined,
             maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined,
             minBedrooms: req.query.minBedrooms ? parseInt(req.query.minBedrooms) : undefined,

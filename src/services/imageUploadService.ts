@@ -1,21 +1,9 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import { Request } from 'express';
+import * as s3Service from './s3UploadService.js';
 
-// Ensure uploads directory exists on startup
-const uploadDir = path.join(process.cwd(), 'uploads', 'properties');
-fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
-    cb(null, uniqueName);
-  },
-});
+// Configure multer for memory storage (files will be uploaded to S3, not disk)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -40,43 +28,36 @@ export const uploadSingle = (fieldName: string = 'images') => upload.single(fiel
 export const uploadArray = (fieldName: string = 'images', maxCount: number = 10) => upload.array(fieldName, maxCount);
 export const uploadFields = (fields: multer.Field[]) => upload.fields(fields);
 
-const getServerBase = () => process.env.SERVER_BASE_URL || 'http://localhost:3008';
-
+/**
+ * Upload single image to S3
+ */
 export const uploadToSpaces = async (
   file: Express.Multer.File,
-  _folder: string = 'properties'
+  folder: string = 'properties'
 ): Promise<string> => {
-  return `${getServerBase()}/uploads/properties/${file.filename}`;
+  return await s3Service.uploadImageToS3(file, folder);
 };
 
+/**
+ * Upload multiple images to S3
+ */
 export const uploadMultipleToSpaces = async (
   files: Express.Multer.File[],
-  _folder: string = 'properties'
+  folder: string = 'properties'
 ): Promise<string[]> => {
-  if (files.length > 10) {
-    throw new Error('Maximum 10 images allowed');
-  }
-  return files.map(file => `${getServerBase()}/uploads/properties/${file.filename}`);
+  return await s3Service.uploadMultipleImagesToS3(files, folder);
 };
 
+/**
+ * Delete single image from S3
+ */
 export const deleteFromSpaces = async (fileUrl: string): Promise<void> => {
-  try {
-    const fileName = path.basename(fileUrl);
-    const filePath = path.join(uploadDir, fileName);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (error) {
-    console.error('Error deleting local file:', error);
-    throw new Error('Failed to delete image');
-  }
+  return await s3Service.deleteImageFromS3(fileUrl);
 };
 
+/**
+ * Delete multiple images from S3
+ */
 export const deleteMultipleFromSpaces = async (fileUrls: string[]): Promise<void> => {
-  const deletePromises = fileUrls.map(url => deleteFromSpaces(url));
-  try {
-    await Promise.all(deletePromises);
-  } catch (error) {
-    console.error('Error deleting multiple images:', error);
-  }
+  return await s3Service.deleteMultipleImagesFromS3(fileUrls);
 };

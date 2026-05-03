@@ -1,18 +1,7 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-// Ensure uploads directory exists on startup
-const uploadDir = path.join(process.cwd(), 'uploads', 'properties');
-fs.mkdirSync(uploadDir, { recursive: true });
-const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (_req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
-        cb(null, uniqueName);
-    },
-});
+import * as s3Service from './s3UploadService.js';
+// Configure multer for memory storage (files will be uploaded to S3, not disk)
+const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
     const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (allowedMimeTypes.includes(file.mimetype)) {
@@ -33,36 +22,28 @@ export const uploadAny = () => upload.any();
 export const uploadSingle = (fieldName = 'images') => upload.single(fieldName);
 export const uploadArray = (fieldName = 'images', maxCount = 10) => upload.array(fieldName, maxCount);
 export const uploadFields = (fields) => upload.fields(fields);
-const getServerBase = () => process.env.SERVER_BASE_URL || 'http://localhost:3008';
-export const uploadToSpaces = async (file, _folder = 'properties') => {
-    return `${getServerBase()}/uploads/properties/${file.filename}`;
+/**
+ * Upload single image to S3
+ */
+export const uploadToSpaces = async (file, folder = 'properties') => {
+    return await s3Service.uploadImageToS3(file, folder);
 };
-export const uploadMultipleToSpaces = async (files, _folder = 'properties') => {
-    if (files.length > 10) {
-        throw new Error('Maximum 10 images allowed');
-    }
-    return files.map(file => `${getServerBase()}/uploads/properties/${file.filename}`);
+/**
+ * Upload multiple images to S3
+ */
+export const uploadMultipleToSpaces = async (files, folder = 'properties') => {
+    return await s3Service.uploadMultipleImagesToS3(files, folder);
 };
+/**
+ * Delete single image from S3
+ */
 export const deleteFromSpaces = async (fileUrl) => {
-    try {
-        const fileName = path.basename(fileUrl);
-        const filePath = path.join(uploadDir, fileName);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-    }
-    catch (error) {
-        console.error('Error deleting local file:', error);
-        throw new Error('Failed to delete image');
-    }
+    return await s3Service.deleteImageFromS3(fileUrl);
 };
+/**
+ * Delete multiple images from S3
+ */
 export const deleteMultipleFromSpaces = async (fileUrls) => {
-    const deletePromises = fileUrls.map(url => deleteFromSpaces(url));
-    try {
-        await Promise.all(deletePromises);
-    }
-    catch (error) {
-        console.error('Error deleting multiple images:', error);
-    }
+    return await s3Service.deleteMultipleImagesFromS3(fileUrls);
 };
 //# sourceMappingURL=imageUploadService.js.map

@@ -11,11 +11,20 @@ export const register = async (req, res) => {
             });
             return;
         }
-        const { username, email, phone_number, password } = req.body;
+        const { username: usernameField, user_name, email, phone_number, phoneNumber, password } = req.body;
+        const username = usernameField ?? user_name;
+        const phone = phone_number ?? phoneNumber;
+        if (!username) {
+            res.status(400).json({
+                success: false,
+                errors: [{ msg: 'Username must be provided', param: 'username', location: 'body' }]
+            });
+            return;
+        }
         const result = await authService.registerUser({
             username,
             email,
-            phoneNumber: phone_number,
+            phoneNumber: phone,
             password
         });
         res.status(201).json({
@@ -100,12 +109,14 @@ export const updateProfile = async (req, res) => {
             res.status(400).json({ success: false, errors: errors.array() });
             return;
         }
-        const { username, phone_number, full_name, bio, company_name, ic_passport, designation, experience_years } = req.body;
+        const { username: usernameField, user_name, phone_number, phoneNumber, full_name, bio, company_name, ic_passport, designation, experience_years } = req.body;
+        const username = usernameField ?? user_name;
+        const phone = phone_number ?? phoneNumber;
         const updates = {};
         if (username !== undefined)
             updates.username = username;
-        if (phone_number !== undefined)
-            updates.phoneNumber = phone_number || null;
+        if (phone !== undefined)
+            updates.phoneNumber = phone || null;
         if (full_name !== undefined)
             updates.fullName = full_name || null;
         if (bio !== undefined)
@@ -185,34 +196,25 @@ export const verifyEmail = async (req, res) => {
 };
 export const verifyOTP = async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
+        const { user_id, otp } = req.body;
+        if (!user_id || !otp) {
             res.status(400).json({
                 success: false,
-                errors: errors.array()
+                message: 'User ID and OTP required'
             });
             return;
         }
-        const { email, otp } = req.body;
-        const result = await authService.verifyOtpByEmail(email, otp);
+        const result = await authService.verifyOTP(user_id, otp);
         res.status(200).json({
             success: true,
-            message: 'OTP verified successfully. Your account is now active.',
+            message: 'OTP verified successfully',
             data: result
         });
     }
     catch (error) {
-        if (error.status) {
-            res.status(error.status).json({
-                success: false,
-                message: error.message
-            });
-            return;
-        }
-        console.error('OTP verification error:', error);
-        res.status(500).json({
+        res.status(error.status || 500).json({
             success: false,
-            message: 'Internal server error'
+            message: error.message || 'Server error'
         });
     }
 };

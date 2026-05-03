@@ -1,24 +1,11 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import { body } from 'express-validator';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadProfileImage, getProfile, updateProfile } from '../controllers/userController.js';
 
-// Ensure avatars upload directory exists
-const avatarUploadDir = path.join(process.cwd(), 'uploads', 'avatars');
-fs.mkdirSync(avatarUploadDir, { recursive: true });
-
-const avatarStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, avatarUploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
-    cb(null, uniqueName);
-  }
-});
+// Use memory storage since files will be uploaded to S3
+const avatarStorage = multer.memoryStorage();
 
 const avatarFileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
