@@ -112,16 +112,6 @@ export const getPropertyById = async (req: Request, res: Response): Promise<void
 
 export const getAllProperties = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        message: 'User not authenticated'
-      });
-      return;
-    }
-
     const filters = {
       listingType: req.query.listingType as 'rent' | 'sale' | undefined,
       propertyType: req.query.propertyType as string | undefined,
@@ -134,8 +124,7 @@ export const getAllProperties = async (req: Request, res: Response): Promise<voi
         | undefined,
       cityName: req.query.cityName as string | undefined,
       state: req.query.state as string | undefined,
-      status: 'active' as string | undefined,
-      userId,
+      status: req.query.state  as string | undefined,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
       minBedrooms: req.query.minBedrooms ? parseInt(req.query.minBedrooms as string) : undefined,
