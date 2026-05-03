@@ -97,26 +97,29 @@ export const createProperty = async (propertyData: Partial<Property>): Promise<P
 
   validatePropertyData(propertyData);
 
-  if (
-    propertyData.propertyName &&
-    propertyData.streetName &&
-    propertyData.cityName &&
-    propertyData.state
-  ) {
-    const duplicate = await propertyRepository.findDuplicateProperty({
-      propertyName: propertyData.propertyName,
-      streetName: propertyData.streetName,
-      cityName: propertyData.cityName,
-      state: propertyData.state
-    });
+// COMMENT THIS WHOLE BLOCK
+/*
+if (
+  propertyData.propertyName &&
+  propertyData.streetName &&
+  propertyData.cityName &&
+  propertyData.state
+) {
+  const duplicate = await propertyRepository.findDuplicateProperty({
+    propertyName: propertyData.propertyName,
+    streetName: propertyData.streetName,
+    cityName: propertyData.cityName,
+    state: propertyData.state
+  });
 
-    if (duplicate) {
-      throw new AppError(
-        'A property with the same name and street already exists at this location',
-        409
-      );
-    }
+  if (duplicate) {
+    throw new AppError(
+      'A property with the same name and street already exists at this location',
+      409
+    );
   }
+}
+*/
 
   const property = await propertyRepository.createProperty(propertyData);
 
