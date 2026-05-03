@@ -286,19 +286,15 @@ export const validateToken = async (userId: string): Promise<UserProfile> => {
 
 export const verifyOTP = async (userId: string, code: string) => {
   const user = await userRepository.findUserById(userId);
+
   if (!user) {
-    throw {
-      status: 404,
-      message: 'User not found'
-    } as ServiceError;
+    throw { status: 404, message: 'User not found' };
   }
 
   const otpRecord = await userRepository.findValidOTP(userId, code);
+
   if (!otpRecord) {
-    throw {
-      status: 400,
-      message: 'Invalid or expired OTP'
-    } as ServiceError;
+    throw { status: 400, message: 'Invalid or expired OTP' };
   }
 
   const updatedUser = await userRepository.updateUserEmailVerification(userId);

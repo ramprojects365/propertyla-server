@@ -211,17 +211,17 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
 };
 export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, otp } = req.body;
+    const { user_id, otp } = req.body;
 
-    if (!email || !otp) {
+    if (!user_id || !otp) {
       res.status(400).json({
         success: false,
-        message: 'Email and OTP required'
+        message: 'User ID and OTP required'
       });
       return;
     }
 
-    const result = await authService.verifyOtpByEmail(email, otp);
+    const result = await authService.verifyOTP(user_id, otp);
 
     res.status(200).json({
       success: true,
