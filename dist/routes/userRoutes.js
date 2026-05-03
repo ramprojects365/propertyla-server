@@ -1,22 +1,10 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import { body } from 'express-validator';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadProfileImage, getProfile, updateProfile } from '../controllers/userController.js';
-// Ensure avatars upload directory exists
-const avatarUploadDir = path.join(process.cwd(), 'uploads', 'avatars');
-fs.mkdirSync(avatarUploadDir, { recursive: true });
-const avatarStorage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-        cb(null, avatarUploadDir);
-    },
-    filename: (_req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
-        cb(null, uniqueName);
-    }
-});
+// Use memory storage since files will be uploaded to S3
+const avatarStorage = multer.memoryStorage();
 const avatarFileFilter = (_req, file, cb) => {
     const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (allowed.includes(file.mimetype)) {
@@ -41,7 +29,9 @@ const profileValidation = [
     body('designation').optional({ nullable: true }).trim(),
     body('experience').optional({ nullable: true }).isInt({ min: 0 }).withMessage('Experience must be a positive number'),
     body('username').optional().trim().isLength({ min: 3, max: 30 }).withMessage('Username must be between 3 and 30 characters'),
-    body('phoneNumber').optional({ nullable: true }).trim()
+    body('user_name').optional().trim().isLength({ min: 3, max: 30 }).withMessage('Username must be between 3 and 30 characters'),
+    body('phoneNumber').optional({ nullable: true }).trim(),
+    body('phone_number').optional({ nullable: true }).trim()
 ];
 router.put('/profile', authenticateToken, profileValidation, updateProfile);
 router.patch('/profile', authenticateToken, profileValidation, updateProfile);

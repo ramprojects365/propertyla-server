@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import path from 'path';
-import fs from 'fs';
 import { validationResult } from 'express-validator';
 import * as authService from '../services/authService.js';
 import * as userRepository from '../repositories/userRepository.js';
+import * as s3Service from '../services/s3UploadService.js';
 
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -68,16 +67,17 @@ export const uploadProfileImage = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    const serverBase = process.env.SERVER_BASE_URL || 'http://localhost:3008';
-    const imageUrl = `${serverBase}/uploads/avatars/${file.filename}`;
+    // Upload to S3
+    const imageUrl = await s3Service.uploadImageToS3(file, 'avatars');
 
-    // Delete old profile image from disk if it exists
+    // Delete old profile image from S3 if it exists
     const oldImageUrl = await userRepository.getProfileImage(req.user!.id);
     if (oldImageUrl) {
-      const oldFileName = path.basename(oldImageUrl);
-      const oldFilePath = path.join(process.cwd(), 'uploads', 'avatars', oldFileName);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
+      try {
+        await s3Service.deleteImageFromS3(oldImageUrl);
+      } catch (error) {
+        console.warn('Failed to delete old profile image:', error);
+        // Don't fail the upload if old image deletion fails
       }
     }
 
@@ -94,6 +94,6 @@ export const uploadProfileImage = async (req: Request, res: Response): Promise<v
       return;
     }
     console.error('Profile image upload error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
   }
 };

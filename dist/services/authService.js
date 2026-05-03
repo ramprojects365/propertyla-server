@@ -223,17 +223,11 @@ export const validateToken = async (userId) => {
 export const verifyOTP = async (userId, code) => {
     const user = await userRepository.findUserById(userId);
     if (!user) {
-        throw {
-            status: 404,
-            message: 'User not found'
-        };
+        throw { status: 404, message: 'User not found' };
     }
     const otpRecord = await userRepository.findValidOTP(userId, code);
     if (!otpRecord) {
-        throw {
-            status: 400,
-            message: 'Invalid or expired OTP'
-        };
+        throw { status: 400, message: 'Invalid or expired OTP' };
     }
     const updatedUser = await userRepository.updateUserEmailVerification(userId);
     return {
@@ -256,6 +250,7 @@ export const verifyOtpByEmail = async (email, code) => {
             message: 'Account is already verified'
         };
     }
+    // ✅ FIXED HERE
     const otpMatch = await userRepository.findValidOTP(user.id, code);
     if (!otpMatch) {
         throw {

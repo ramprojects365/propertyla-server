@@ -10,10 +10,14 @@ const getUserRepository = () => {
 export const findValidOTP = async (userId, otp) => {
     const repository = getUserRepository();
     const user = await repository.findOne({
-        where: { id: userId, otp },
-        select: ['id']
+        where: {
+            id: userId,
+            otp
+        }
     });
-    return !!user;
+    if (!user)
+        return false;
+    return true;
 };
 export const createUser = async (userData) => {
     const repository = getUserRepository();
