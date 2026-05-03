@@ -70,6 +70,10 @@ export const findAllProperties = async (filters?: PropertyFilters): Promise<Prop
   const propertyRepository = AppDataSource.getRepository(Property);
   const queryBuilder = propertyRepository.createQueryBuilder('property');
 
+  // Default to active status if not specified
+  const statusFilter = filters?.status !== undefined ? filters.status : 'active';
+  queryBuilder.andWhere('property.status = :status', { status: statusFilter });
+
   if (filters) {
     if (filters.listingType) {
       queryBuilder.andWhere('property.listingType = :listingType', {
@@ -109,10 +113,6 @@ export const findAllProperties = async (filters?: PropertyFilters): Promise<Prop
       queryBuilder.andWhere('property.state ILIKE :state', {
         state: `%${filters.state}%`
       });
-    }
-
-    if (filters.status) {
-      queryBuilder.andWhere('property.status = :status', { status: filters.status });
     }
 
     if (filters.userId) {
@@ -220,6 +220,10 @@ export const searchProperties = async (filters: SearchFilters): Promise<Property
 
   const conditions: string[] = [];
   const params: Record<string, unknown> = {};
+
+  // Default to active status
+  conditions.push('property.status = :status');
+  params.status = 'active';
 
   if (filters.q) {
     conditions.push(

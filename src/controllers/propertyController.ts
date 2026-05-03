@@ -124,7 +124,7 @@ export const getAllProperties = async (req: Request, res: Response): Promise<voi
         | undefined,
       cityName: req.query.cityName as string | undefined,
       state: req.query.state as string | undefined,
-      status: req.query.state  as string | undefined,
+      status: req.query.status as string | undefined,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
       minBedrooms: req.query.minBedrooms ? parseInt(req.query.minBedrooms as string) : undefined,
