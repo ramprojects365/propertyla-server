@@ -1,29 +1,5 @@
-import nodemailer, { Transporter } from 'nodemailer';
-
-let transporter: Transporter | null = null;
-
-const getTransporter = (): Transporter => {
-  if (transporter) return transporter;
-
-  const host = process.env.MAIL_HOST;
-  const port = process.env.MAIL_PORT;
-  const user = process.env.MAIL_USER;
-  const pass = process.env.MAIL_PASS;
-
-  if (!host || !port || !user || !pass) {
-    throw new Error('Mail configuration missing: MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS are required');
-  }
-
-  transporter = nodemailer.createTransport({
-    host,
-    port: Number(port),
-    secure: Number(port) === 465,
-    auth: { user, pass }
-  });
-
-  return transporter;
-};
-
+import { Resend } from "resend";
+const resend = new Resend(process.env.RESEND_API_KEY);
 const buildOtpEmailHtml = (username: string, otp: string): string => {
   return `<!DOCTYPE html>
 <html>
@@ -71,15 +47,19 @@ const buildOtpEmailHtml = (username: string, otp: string): string => {
 </html>`;
 };
 
-export const sendOtpEmail = async (to: string, username: string, otp: string): Promise<void> => {
-  const from = process.env.MAIL_FROM || process.env.MAIL_USER;
-  const t = getTransporter();
+export const sendOtpEmail = async (
+  to: string,
+  username: string,
+  otp: string
+): Promise<void> => {
+  const from =
+    process.env.MAIL_FROM || "PropertyLA <support@propertyla.com.my>";
 
-  await t.sendMail({
+  await resend.emails.send({
     from,
     to,
-    subject: 'Your PropertyLA verification code',
-    text: `Hi ${username},\n\nYour PropertyLA verification code is: ${otp}\n\nIf you didn't request this, you can ignore this email.`,
-    html: buildOtpEmailHtml(username, otp)
+    subject: "Your PropertyLA verification code",
+    html: buildOtpEmailHtml(username, otp),
+    text: `Hi ${username}, your OTP is ${otp}`,
   });
 };
