@@ -1,5 +1,6 @@
 import { AppDataSource } from '../config/database.js';
 import { Property } from '../entities/Property.js';
+import { AppError } from '../utils/errors.js';
 import { FindOptionsWhere, ILike, MoreThanOrEqual, LessThanOrEqual, Equal } from 'typeorm';
 
 export interface PropertyFilters {
@@ -28,7 +29,14 @@ export interface PropertyFilters {
 export const createProperty = async (propertyData: Partial<Property>): Promise<Property> => {
   const propertyRepository = AppDataSource.getRepository(Property);
   const property = propertyRepository.create(propertyData);
-  return await propertyRepository.save(property);
+  const savedProperty = await propertyRepository.save(property);
+  const propertyWithUser = await findPropertyById(savedProperty.id);
+
+  if (!propertyWithUser) {
+    throw new AppError('Failed to load property after creation', 500);
+  }
+
+  return propertyWithUser;
 };
 
 export interface DuplicatePropertyCheck {
@@ -62,13 +70,15 @@ export const findDuplicateProperty = async (
 export const findPropertyById = async (id: string): Promise<Property | null> => {
   const propertyRepository = AppDataSource.getRepository(Property);
   return await propertyRepository.findOne({
-    where: { id }
+    where: { id },
+    relations: ['user']
   });
 };
 
 export const findAllProperties = async (filters?: PropertyFilters): Promise<Property[]> => {
   const propertyRepository = AppDataSource.getRepository(Property);
   const queryBuilder = propertyRepository.createQueryBuilder('property');
+  queryBuilder.leftJoinAndSelect('property.user', 'user');
 
   // Default to active status if not specified
   const statusFilter = filters?.status !== undefined ? filters.status : 'active';
@@ -189,7 +199,8 @@ export const findPropertiesByUserId = async (userId: string): Promise<Property[]
   const propertyRepository = AppDataSource.getRepository(Property);
   return await propertyRepository.find({
     where: { userId },
-    order: { createdAt: 'DESC' }
+    order: { createdAt: 'DESC' },
+    relations: ['user']
   });
 };
 
@@ -217,6 +228,7 @@ export interface SearchFilters {
 export const searchProperties = async (filters: SearchFilters): Promise<Property[]> => {
   const propertyRepository = AppDataSource.getRepository(Property);
   const queryBuilder = propertyRepository.createQueryBuilder('property');
+  queryBuilder.leftJoinAndSelect('property.user', 'user');
 
   const conditions: string[] = [];
   const params: Record<string, unknown> = {};
