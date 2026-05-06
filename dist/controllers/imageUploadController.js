@@ -1,21 +1,19 @@
 import * as imageUploadService from '../services/imageUploadService.js';
+const MAX_IMAGES = 15;
 export const uploadImages = async (req, res) => {
     try {
-        console.log('Request files:', req.files);
-        console.log('Request body:', req.body);
         const files = req.files;
         if (!files || files.length === 0) {
-            console.log('No files found in request');
             res.status(400).json({
                 success: false,
                 message: 'No images provided'
             });
             return;
         }
-        if (files.length > 10) {
+        if (files.length > MAX_IMAGES) {
             res.status(400).json({
                 success: false,
-                message: 'Maximum 10 images allowed'
+                message: `Maximum ${MAX_IMAGES} images allowed`
             });
             return;
         }
@@ -37,7 +35,6 @@ export const uploadImages = async (req, res) => {
 };
 export const uploadSingleImage = async (req, res) => {
     try {
-        console.log('Request file:', req.file);
         const file = req.file;
         if (!file) {
             res.status(400).json({

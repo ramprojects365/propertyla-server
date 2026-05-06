@@ -20,7 +20,7 @@ export const upload = multer({
 });
 export const uploadAny = () => upload.any();
 export const uploadSingle = (fieldName = 'images') => upload.single(fieldName);
-export const uploadArray = (fieldName = 'images', maxCount = 10) => upload.array(fieldName, maxCount);
+export const uploadArray = (fieldName = 'images', maxCount = 15) => upload.array(fieldName, maxCount);
 export const uploadFields = (fields) => upload.fields(fields);
 /**
  * Upload single image to S3

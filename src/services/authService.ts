@@ -42,15 +42,14 @@ const generateUsernameFromEmail = (email: string): string => {
   const base = localPart
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '')
-    .slice(0, 24) || 'user';
+    .slice(0, 21) || 'user';
 
   return `${base}_${crypto.randomBytes(4).toString('hex')}`;
 };
 
 export const registerUser = async (registrationData: RegistrationData) => {
   const { email, password } = registrationData;
-  const username = registrationData.username?.trim() || generateUsernameFromEmail(email);
-  const phoneNumber = registrationData.phoneNumber?.trim() || undefined;
+  const username = generateUsernameFromEmail(email);
 
   const existingUser = await userRepository.findUserByEmail(email);
 
@@ -70,7 +69,6 @@ export const registerUser = async (registrationData: RegistrationData) => {
   const newUser = await userRepository.createUser({
     username,
     email,
-    phoneNumber,
     passwordHash,
     verificationToken,
     verificationExpiry,
@@ -268,7 +266,6 @@ export const changePassword = async (
 
 export const validateToken = async (userId: string): Promise<UserProfile> => {
   const user = await userRepository.findUserById(userId);
-  console.log(user);
   if (!user) {
     throw {
       status: 403,

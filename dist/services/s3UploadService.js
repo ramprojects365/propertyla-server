@@ -7,6 +7,7 @@ const s3 = new AWS.S3({
 });
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 const AWS_CLOUDFRONT_URL = process.env.AWS_CLOUDFRONT_URL || `https://${BUCKET_NAME}.s3.amazonaws.com`;
+const MAX_IMAGES = 15;
 if (!BUCKET_NAME) {
     throw new Error('AWS_S3_BUCKET_NAME environment variable is required');
 }
@@ -45,8 +46,8 @@ export const uploadImageToS3 = async (file, folderPath = 'uploads') => {
  * Upload multiple images to S3
  */
 export const uploadMultipleImagesToS3 = async (files, folderPath = 'uploads') => {
-    if (files.length > 10) {
-        throw new Error('Maximum 10 images allowed');
+    if (files.length > MAX_IMAGES) {
+        throw new Error(`Maximum ${MAX_IMAGES} images allowed`);
     }
     const uploadPromises = files.map(file => uploadImageToS3(file, folderPath));
     try {

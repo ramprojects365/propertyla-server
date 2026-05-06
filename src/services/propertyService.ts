@@ -65,8 +65,8 @@ const validatePropertyData = (data: Partial<Property>): void => {
     throw new AppError('Invalid pincode format', 400);
   }
 
-  if (data.images && data.images.length > 10) {
-    throw new AppError('Maximum 10 images allowed', 400);
+  if (data.images && data.images.length > 15) {
+    throw new AppError('Maximum 15 images allowed', 400);
   }
 };
 

@@ -25,7 +25,7 @@ export const upload = multer({
 
 export const uploadAny = () => upload.any();
 export const uploadSingle = (fieldName: string = 'images') => upload.single(fieldName);
-export const uploadArray = (fieldName: string = 'images', maxCount: number = 10) => upload.array(fieldName, maxCount);
+export const uploadArray = (fieldName: string = 'images', maxCount: number = 15) => upload.array(fieldName, maxCount);
 export const uploadFields = (fields: multer.Field[]) => upload.fields(fields);
 
 /**

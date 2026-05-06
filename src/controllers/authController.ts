@@ -3,7 +3,6 @@ import { validationResult } from 'express-validator';
 import * as authService from '../services/authService.js';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
-  console.log('Test this is the test route for auth controller');
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -14,14 +13,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { username: usernameField, user_name, email, phone_number, phoneNumber, password } = req.body;
-    const username = usernameField ?? user_name;
-    const phone = phone_number ?? phoneNumber;
+    const { email, password } = req.body;
 
     const result = await authService.registerUser({
-      username,
       email,
-      phoneNumber: phone,
       password
     });
 
@@ -49,7 +44,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
-  console.log('Test this is the test route for auth controller');
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
