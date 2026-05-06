@@ -47,7 +47,7 @@ export interface UpdateProfileData {
     experienceYears?: number | null;
 }
 export interface RegistrationData {
-    username: string;
+    username?: string;
     email: string;
     phoneNumber?: string;
     password: string;

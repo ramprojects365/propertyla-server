@@ -20,28 +20,24 @@ const generateJWTToken = (userId, email) => {
 const calculateVerificationExpiry = () => {
     return new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
 };
+const generateUsernameFromEmail = (email) => {
+    const localPart = email.split('@')[0] || 'user';
+    const base = localPart
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, '')
+        .slice(0, 24) || 'user';
+    return `${base}_${crypto.randomBytes(4).toString('hex')}`;
+};
 export const registerUser = async (registrationData) => {
-    const { username, email, phoneNumber, password } = registrationData;
-    const existingUser = await userRepository.checkUserExists(username, email, phoneNumber);
+    const { email, password } = registrationData;
+    const username = registrationData.username?.trim() || generateUsernameFromEmail(email);
+    const phoneNumber = registrationData.phoneNumber?.trim() || undefined;
+    const existingUser = await userRepository.findUserByEmail(email);
     if (existingUser) {
-        if (existingUser.usernameExists) {
-            throw {
-                status: 400,
-                message: 'Username already exists'
-            };
-        }
-        if (existingUser.emailExists) {
-            throw {
-                status: 400,
-                message: 'Email already exists'
-            };
-        }
-        if (existingUser.phoneExists) {
-            throw {
-                status: 400,
-                message: 'Phone number already exists'
-            };
-        }
+        throw {
+            status: 400,
+            message: 'Email already exists'
+        };
     }
     const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
     const verificationToken = generateVerificationToken();

@@ -1,9 +1,15 @@
 import { AppDataSource } from '../config/database.js';
 import { Property } from '../entities/Property.js';
+import { AppError } from '../utils/errors.js';
 export const createProperty = async (propertyData) => {
     const propertyRepository = AppDataSource.getRepository(Property);
     const property = propertyRepository.create(propertyData);
-    return await propertyRepository.save(property);
+    const savedProperty = await propertyRepository.save(property);
+    const propertyWithUser = await findPropertyById(savedProperty.id);
+    if (!propertyWithUser) {
+        throw new AppError('Failed to load property after creation', 500);
+    }
+    return propertyWithUser;
 };
 export const findDuplicateProperty = async (match) => {
     const propertyRepository = AppDataSource.getRepository(Property);
@@ -26,12 +32,17 @@ export const findDuplicateProperty = async (match) => {
 export const findPropertyById = async (id) => {
     const propertyRepository = AppDataSource.getRepository(Property);
     return await propertyRepository.findOne({
-        where: { id }
+        where: { id },
+        relations: ['user']
     });
 };
 export const findAllProperties = async (filters) => {
     const propertyRepository = AppDataSource.getRepository(Property);
     const queryBuilder = propertyRepository.createQueryBuilder('property');
+    queryBuilder.leftJoinAndSelect('property.user', 'user');
+    // Default to active status if not specified
+    const statusFilter = filters?.status !== undefined ? filters.status : 'active';
+    queryBuilder.andWhere('property.status = :status', { status: statusFilter });
     if (filters) {
         if (filters.listingType) {
             queryBuilder.andWhere('property.listingType = :listingType', {
@@ -65,9 +76,6 @@ export const findAllProperties = async (filters) => {
             queryBuilder.andWhere('property.state ILIKE :state', {
                 state: `%${filters.state}%`
             });
-        }
-        if (filters.status) {
-            queryBuilder.andWhere('property.status = :status', { status: filters.status });
         }
         if (filters.userId) {
             queryBuilder.andWhere('property.userId = :userId', { userId: filters.userId });
@@ -129,7 +137,8 @@ export const findPropertiesByUserId = async (userId) => {
     const propertyRepository = AppDataSource.getRepository(Property);
     return await propertyRepository.find({
         where: { userId },
-        order: { createdAt: 'DESC' }
+        order: { createdAt: 'DESC' },
+        relations: ['user']
     });
 };
 export const updateProperty = async (id, updates) => {
@@ -144,8 +153,12 @@ export const deleteProperty = async (id) => {
 export const searchProperties = async (filters) => {
     const propertyRepository = AppDataSource.getRepository(Property);
     const queryBuilder = propertyRepository.createQueryBuilder('property');
+    queryBuilder.leftJoinAndSelect('property.user', 'user');
     const conditions = [];
     const params = {};
+    // Default to active status
+    conditions.push('property.status = :status');
+    params.status = 'active';
     if (filters.q) {
         conditions.push('(property.title ILIKE :q OR ' +
             'property.description ILIKE :q OR ' +

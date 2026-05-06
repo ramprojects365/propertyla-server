@@ -14,13 +14,6 @@ export const register = async (req, res) => {
         const { username: usernameField, user_name, email, phone_number, phoneNumber, password } = req.body;
         const username = usernameField ?? user_name;
         const phone = phone_number ?? phoneNumber;
-        if (!username) {
-            res.status(400).json({
-                success: false,
-                errors: [{ msg: 'Username must be provided', param: 'username', location: 'body' }]
-            });
-            return;
-        }
         const result = await authService.registerUser({
             username,
             email,

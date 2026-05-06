@@ -1,5 +1,5 @@
 import express from 'express';
-import { body, oneOf } from 'express-validator';
+import { body } from 'express-validator';
 import { register, login, getProfile, updateProfile, changePassword, verifyEmail, verifyOTP } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -8,31 +8,11 @@ const router = express.Router();
 router.post(
   '/register',
   [
-    body('username')
-      .optional()
-      .trim()
-      .isLength({ min: 3, max: 30 })
-      .withMessage('Username must be between 3 and 30 characters'),
-    body('user_name')
-      .optional()
-      .trim()
-      .isLength({ min: 3, max: 30 })
-      .withMessage('Username must be between 3 and 30 characters'),
     body('email')
       .trim()
       .isEmail()
       .withMessage('Invalid email address')
       .normalizeEmail(),
-    body('phone_number')
-      .optional({ nullable: true })
-      .trim()
-      .matches(/^\+?[1-9]\d{1,14}$/)
-      .withMessage('Invalid phone number format'),
-    body('phoneNumber')
-      .optional({ nullable: true })
-      .trim()
-      .matches(/^\+?[1-9]\d{1,14}$/)
-      .withMessage('Invalid phone number format'),
     body('password')
       .isLength({ min: 8 })
       .withMessage('Password must be at least 8 characters long')
