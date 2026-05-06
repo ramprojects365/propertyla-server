@@ -1,8 +1,9 @@
 import * as propertyService from '../services/propertyService.js';
 import { AppError } from '../utils/errors.js';
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isValidUuid = (value) => UUID_REGEX.test(value);
 export const createProperty = async (req, res) => {
     try {
-        console.log(req.user);
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({
@@ -76,6 +77,13 @@ export const getPropertyById = async (req, res) => {
             res.status(400).json({
                 success: false,
                 message: 'Property ID is required'
+            });
+            return;
+        }
+        if (!isValidUuid(propertyId)) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid property ID'
             });
             return;
         }
@@ -181,6 +189,13 @@ export const updateProperty = async (req, res) => {
             });
             return;
         }
+        if (!isValidUuid(propertyId)) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid property ID'
+            });
+            return;
+        }
         const updatedProperty = await propertyService.updateProperty(propertyId, userId, req.body);
         res.status(200).json({
             success: true,
@@ -218,6 +233,13 @@ export const deleteProperty = async (req, res) => {
             res.status(400).json({
                 success: false,
                 message: 'Property ID is required'
+            });
+            return;
+        }
+        if (!isValidUuid(propertyId)) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid property ID'
             });
             return;
         }

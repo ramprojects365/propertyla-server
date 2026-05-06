@@ -4,11 +4,12 @@ import { upload } from '../services/imageUploadService.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
+const MAX_IMAGES = 15;
 
 router.post(
   '/upload-multiple',
   authenticateToken,
-  upload.array('images', 10),
+  upload.array('images', MAX_IMAGES),
   imageUploadController.uploadImages
 );
 

@@ -40,7 +40,7 @@ app.get('/', (req, res) => {
                 search: 'GET /api/properties/search?q=searchTerm'
             },
             images: {
-                uploadMultiple: 'POST /api/images/upload-multiple (requires auth, max 10 images)',
+                uploadMultiple: 'POST /api/images/upload-multiple (requires auth, max 15 images)',
                 uploadSingle: 'POST /api/images/upload-single',
                 delete: 'DELETE /api/images/delete (requires auth)',
                 get: 'GET /api/images/test (requires auth)'

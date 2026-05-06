@@ -44,8 +44,8 @@ const validatePropertyData = (data) => {
     if (data.pincode && !/^[0-9A-Za-z\s-]{3,20}$/.test(data.pincode)) {
         throw new AppError('Invalid pincode format', 400);
     }
-    if (data.images && data.images.length > 10) {
-        throw new AppError('Maximum 10 images allowed', 400);
+    if (data.images && data.images.length > 15) {
+        throw new AppError('Maximum 15 images allowed', 400);
     }
 };
 export const createProperty = async (propertyData) => {
