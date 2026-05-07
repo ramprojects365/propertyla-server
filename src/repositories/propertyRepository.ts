@@ -198,7 +198,7 @@ export const findAllProperties = async (filters?: PropertyFilters): Promise<Prop
 export const findPropertiesByUserId = async (userId: string): Promise<Property[]> => {
   const propertyRepository = AppDataSource.getRepository(Property);
   return await propertyRepository.find({
-    where: { userId },
+    where: { userId, status: 'active' },
     order: { createdAt: 'DESC' },
     relations: ['user']
   });
@@ -280,6 +280,6 @@ export const searchProperties = async (filters: SearchFilters): Promise<Property
 export const countPropertiesByUser = async (userId: string): Promise<number> => {
   const propertyRepository = AppDataSource.getRepository(Property);
   return await propertyRepository.count({
-    where: { userId }
+    where: { userId, status: 'active' }
   });
 };
