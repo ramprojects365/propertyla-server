@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/start.js",
     "start:typeorm": "npm run build && node dist/server.js",
     "dev": "tsc && node --watch dist/server.js",
     "dev:typeorm": "npm run build && node --watch dist/server.js",

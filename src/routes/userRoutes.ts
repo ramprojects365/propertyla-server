@@ -19,7 +19,7 @@ const avatarFileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileF
 const avatarUpload = multer({
   storage: avatarStorage,
   fileFilter: avatarFileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 } // 2MB max for avatars
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB max for avatars
 });
 
 const router = Router();

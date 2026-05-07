@@ -136,7 +136,7 @@ export const findAllProperties = async (filters) => {
 export const findPropertiesByUserId = async (userId) => {
     const propertyRepository = AppDataSource.getRepository(Property);
     return await propertyRepository.find({
-        where: { userId },
+        where: { userId, status: 'active' },
         order: { createdAt: 'DESC' },
         relations: ['user']
     });
@@ -193,7 +193,7 @@ export const searchProperties = async (filters) => {
 export const countPropertiesByUser = async (userId) => {
     const propertyRepository = AppDataSource.getRepository(Property);
     return await propertyRepository.count({
-        where: { userId }
+        where: { userId, status: 'active' }
     });
 };
 //# sourceMappingURL=propertyRepository.js.map
