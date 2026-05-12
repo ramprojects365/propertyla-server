@@ -93,6 +93,24 @@ export class Property {
   landmark?: string;
 
   @Column({
+    type: 'text',
+    nullable: true
+  })
+  location?: string;
+
+  @Column({
+    type: 'double precision',
+    nullable: true
+  })
+  latitude?: number;
+
+  @Column({
+    type: 'double precision',
+    nullable: true
+  })
+  longitude?: number;
+
+  @Column({
     type: 'numeric',
     precision: 15,
     scale: 2

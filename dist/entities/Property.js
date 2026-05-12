@@ -107,6 +107,27 @@ __decorate([
 ], Property.prototype, "landmark", void 0);
 __decorate([
     Column({
+        type: 'text',
+        nullable: true
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "location", void 0);
+__decorate([
+    Column({
+        type: 'double precision',
+        nullable: true
+    }),
+    __metadata("design:type", Number)
+], Property.prototype, "latitude", void 0);
+__decorate([
+    Column({
+        type: 'double precision',
+        nullable: true
+    }),
+    __metadata("design:type", Number)
+], Property.prototype, "longitude", void 0);
+__decorate([
+    Column({
         type: 'numeric',
         precision: 15,
         scale: 2

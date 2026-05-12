@@ -6,34 +6,30 @@ import { Property } from '../entities/Property.js';
 
 dotenv.config();
 
-// export const AppDataSource = new DataSource({
-//   type: 'postgres',
-//   host: process.env.DB_HOST,
-//   port: parseInt(process.env.DB_PORT || '5432'),
-//   username: process.env.DB_USER,
-//   password: process.env.DB_PASSWORD,
-//   database: process.env.DB_NAME,
-//   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : false,
-//   synchronize: true,
-//   logging: process.env.NODE_ENV === 'development',
-//   entities: [User, Property],
-//   migrations: [],
-//   subscribers: []
-// });
+const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
+const useSsl =
+  process.env.DB_SSL === 'true' ||
+  Boolean(process.env.DATABASE_PUBLIC_URL && databaseUrl === process.env.DATABASE_PUBLIC_URL);
 
-const connectionOptions = process.env.DATABASE_PUBLIC_URL
+const connectionOptions = databaseUrl
   ? {
-    url: process.env.DATABASE_PUBLIC_URL,
-    ssl: { rejectUnauthorized: false },
-  }
-  : (() => {
-    throw new Error("DATABASE_PUBLIC_URL is missing. Railway Postgres not configured.");
-  })();
+      url: databaseUrl,
+      ssl: useSsl ? { rejectUnauthorized: false } : false
+    }
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME || 'auth_db',
+      ssl: useSsl ? { rejectUnauthorized: false } : false
+    };
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
   ...connectionOptions,
   synchronize: true,
+  logging: process.env.NODE_ENV === 'development',
   entities: [User, Property],
 });
 

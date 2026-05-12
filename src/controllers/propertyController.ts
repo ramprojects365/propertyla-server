@@ -7,6 +7,130 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 
 const isValidUuid = (value: string): boolean => UUID_REGEX.test(value);
 
+const parseOptionalFloat = (value: unknown): number | undefined => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  const parsed = typeof value === 'number' ? value : parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const parseOptionalInteger = (value: unknown): number | undefined => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  const parsed = typeof value === 'number' ? value : parseInt(String(value), 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const parseOptionalBoolean = (value: unknown): boolean | undefined => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    return value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+  }
+
+  return Boolean(value);
+};
+
+const normalizeAmenities = (value: unknown): Property['amenities'] | undefined => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const amenities = value as Partial<Property['amenities']>;
+    return {
+      lifestyle: Array.isArray(amenities.lifestyle) ? amenities.lifestyle : [],
+      facilities: Array.isArray(amenities.facilities) ? amenities.facilities : [],
+      security: Array.isArray(amenities.security) ? amenities.security : []
+    };
+  }
+
+  return undefined;
+};
+
+const buildPropertyPayload = (
+  body: Record<string, unknown>,
+  options: { includeDefaults?: boolean; userId?: string } = {}
+): Partial<Property> => {
+  const propertyData: Partial<Property> = {};
+  const stringFields: Array<keyof Property> = [
+    'title',
+    'description',
+    'listingType',
+    'propertyType',
+    'tenure',
+    'propertyName',
+    'streetName',
+    'cityName',
+    'state',
+    'county',
+    'pincode',
+    'landmark',
+    'location',
+    'furnishing',
+    'availability',
+    'floorLevel',
+    'status'
+  ];
+
+  for (const field of stringFields) {
+    if (body[field] !== undefined) {
+      (propertyData as Record<string, unknown>)[field] = body[field];
+    }
+  }
+
+  if (options.includeDefaults && propertyData.status === undefined) {
+    propertyData.status = 'active';
+  }
+
+  const negotiable = parseOptionalBoolean(body.negotiable);
+  if (negotiable !== undefined) {
+    propertyData.negotiable = negotiable;
+  }
+
+  if (Array.isArray(body.images)) {
+    propertyData.images = body.images.filter((image): image is string => typeof image === 'string');
+  }
+
+  const amenities = normalizeAmenities(body.amenities);
+  if (amenities || options.includeDefaults) {
+    propertyData.amenities = amenities ?? { lifestyle: [], facilities: [], security: [] };
+  }
+
+  const price = parseOptionalFloat(body.price);
+  if (price !== undefined) propertyData.price = price;
+
+  const buildupArea = parseOptionalFloat(body.buildupArea);
+  if (buildupArea !== undefined) propertyData.buildupArea = buildupArea;
+
+  const latitude = parseOptionalFloat(body.latitude);
+  if (latitude !== undefined) propertyData.latitude = latitude;
+
+  const longitude = parseOptionalFloat(body.longitude);
+  if (longitude !== undefined) propertyData.longitude = longitude;
+
+  const bedrooms = parseOptionalInteger(body.bedrooms);
+  if (bedrooms !== undefined) propertyData.bedrooms = bedrooms;
+
+  const bathrooms = parseOptionalInteger(body.bathrooms);
+  if (bathrooms !== undefined) propertyData.bathrooms = bathrooms;
+
+  const yearOfBuild = parseOptionalInteger(body.yearOfBuild);
+  if (yearOfBuild !== undefined) propertyData.yearOfBuild = yearOfBuild;
+
+  if (options.userId) {
+    propertyData.userId = options.userId;
+  }
+
+  return propertyData;
+};
+
 export const createProperty = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.id;
@@ -19,44 +143,7 @@ export const createProperty = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const body = req.body;
-
-    // Explicitly parse numeric fields so they arrive as proper types
-    // even if the client sends them as strings.
-    const amenities = body.amenities &&
-      typeof body.amenities === 'object' &&
-      !Array.isArray(body.amenities)
-        ? body.amenities
-        : { lifestyle: [], facilities: [], security: [] };
-
-    const propertyData: Partial<Property> = {
-      title: body.title,
-      description: body.description,
-      listingType: body.listingType,
-      propertyType: body.propertyType,
-      tenure: body.tenure,
-      propertyName: body.propertyName,
-      streetName: body.streetName,
-      cityName: body.cityName,
-      state: body.state,
-      county: body.county,
-      pincode: body.pincode,
-      landmark: body.landmark,
-      furnishing: body.furnishing,
-      availability: body.availability,
-      floorLevel: body.floorLevel,
-      status: body.status ?? 'active',
-      negotiable: typeof body.negotiable === 'boolean' ? body.negotiable : body.negotiable === true || body.negotiable === 'true',
-      images: Array.isArray(body.images) ? body.images : undefined,
-      amenities,
-      // Parse numeric fields explicitly
-      price: body.price !== undefined ? parseFloat(body.price) : undefined as any,
-      buildupArea: body.buildupArea !== undefined ? parseFloat(body.buildupArea) : undefined,
-      bedrooms: body.bedrooms !== undefined ? parseInt(body.bedrooms, 10) : undefined,
-      bathrooms: body.bathrooms !== undefined ? parseInt(body.bathrooms, 10) : undefined,
-      yearOfBuild: body.yearOfBuild !== undefined ? parseInt(body.yearOfBuild, 10) : undefined,
-      userId,
-    };
+    const propertyData = buildPropertyPayload(req.body, { includeDefaults: true, userId });
 
     const property = await propertyService.createProperty(propertyData);
 
@@ -223,7 +310,8 @@ export const updateProperty = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const updatedProperty = await propertyService.updateProperty(propertyId, userId, req.body);
+    const propertyData = buildPropertyPayload(req.body);
+    const updatedProperty = await propertyService.updateProperty(propertyId, userId, propertyData);
 
     res.status(200).json({
       success: true,

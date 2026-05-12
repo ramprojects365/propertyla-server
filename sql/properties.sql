@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS properties (
   county VARCHAR(100),
   pincode VARCHAR(20),
   landmark VARCHAR(255),
+  location TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
 
   price NUMERIC(15, 2) NOT NULL CHECK (price >= 0),
   buildup_area NUMERIC(10, 2) CHECK (buildup_area >= 0),

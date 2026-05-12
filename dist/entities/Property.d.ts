@@ -13,6 +13,9 @@ export declare class Property {
     county?: string;
     pincode?: string;
     landmark?: string;
+    location?: string;
+    latitude?: number;
+    longitude?: number;
     price: number;
     buildupArea?: number;
     furnishing?: 'Fully' | 'Partially' | 'Unfurnished';

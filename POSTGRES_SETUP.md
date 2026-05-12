@@ -183,6 +183,20 @@ psql -U postgres -d auth_db < backup.sql
 6. **Use environment variables** for all sensitive data
 7. **Enable connection pooling** for production (pgBouncer)
 
+## Railway PostgreSQL
+
+Railway provides `DATABASE_URL` for services inside the same Railway project and
+may also expose `DATABASE_PUBLIC_URL` for external connections. The server checks
+`DATABASE_URL` first, then `DATABASE_PUBLIC_URL`, then the local `DB_*` values.
+
+For the property edit location fields, TypeORM `synchronize: true` should add
+the nullable columns automatically on deploy. If you need to update Railway
+Postgres manually, run:
+
+```bash
+psql "$DATABASE_URL" -f sql/railway-update.sql
+```
+
 ## Additional PostgreSQL Tools
 
 - **pgAdmin**: Web-based PostgreSQL management tool
