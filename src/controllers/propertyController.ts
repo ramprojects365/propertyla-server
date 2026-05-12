@@ -54,12 +54,86 @@ const normalizeAmenities = (value: unknown): Property['amenities'] | undefined =
   return undefined;
 };
 
+type PropertyBodyField = keyof Pick<
+  Property,
+  | 'title'
+  | 'description'
+  | 'listingType'
+  | 'propertyType'
+  | 'tenure'
+  | 'propertyName'
+  | 'streetName'
+  | 'cityName'
+  | 'state'
+  | 'county'
+  | 'pincode'
+  | 'landmark'
+  | 'location'
+  | 'furnishing'
+  | 'availability'
+  | 'floorLevel'
+  | 'status'
+  | 'negotiable'
+  | 'images'
+  | 'amenities'
+  | 'price'
+  | 'buildupArea'
+  | 'latitude'
+  | 'longitude'
+  | 'bedrooms'
+  | 'bathrooms'
+  | 'yearOfBuild'
+>;
+
+const propertyBodyKeys: Record<PropertyBodyField, string[]> = {
+  title: ['title'],
+  description: ['description'],
+  listingType: ['listingType', 'listing_type'],
+  propertyType: ['propertyType', 'property_type'],
+  tenure: ['tenure'],
+  propertyName: ['propertyName', 'property_name'],
+  streetName: ['streetName', 'street_name'],
+  cityName: ['cityName', 'city_name'],
+  state: ['state'],
+  county: ['county'],
+  pincode: ['pincode'],
+  landmark: ['landmark'],
+  location: ['location'],
+  furnishing: ['furnishing'],
+  availability: ['availability'],
+  floorLevel: ['floorLevel', 'floor_level'],
+  status: ['status'],
+  negotiable: ['negotiable'],
+  images: ['images'],
+  amenities: ['amenities'],
+  price: ['price'],
+  buildupArea: ['buildupArea', 'buildup_area'],
+  latitude: ['latitude'],
+  longitude: ['longitude'],
+  bedrooms: ['bedrooms'],
+  bathrooms: ['bathrooms'],
+  yearOfBuild: ['yearOfBuild', 'year_of_build']
+};
+
+const getBodyValue = (
+  body: Record<string, unknown>,
+  field: PropertyBodyField
+): unknown => {
+  for (const key of propertyBodyKeys[field]) {
+    if (body[key] !== undefined) {
+      return body[key];
+    }
+  }
+
+  return undefined;
+};
+
 const buildPropertyPayload = (
   body: Record<string, unknown>,
   options: { includeDefaults?: boolean; userId?: string } = {}
 ): Partial<Property> => {
   const propertyData: Partial<Property> = {};
-  const stringFields: Array<keyof Property> = [
+  const stringFields: PropertyBodyField[] = [
     'title',
     'description',
     'listingType',
@@ -80,8 +154,9 @@ const buildPropertyPayload = (
   ];
 
   for (const field of stringFields) {
-    if (body[field] !== undefined) {
-      (propertyData as Record<string, unknown>)[field] = body[field];
+    const value = getBodyValue(body, field);
+    if (value !== undefined) {
+      (propertyData as Record<string, unknown>)[field] = value;
     }
   }
 
@@ -89,39 +164,40 @@ const buildPropertyPayload = (
     propertyData.status = 'active';
   }
 
-  const negotiable = parseOptionalBoolean(body.negotiable);
+  const negotiable = parseOptionalBoolean(getBodyValue(body, 'negotiable'));
   if (negotiable !== undefined) {
     propertyData.negotiable = negotiable;
   }
 
-  if (Array.isArray(body.images)) {
-    propertyData.images = body.images.filter((image): image is string => typeof image === 'string');
+  const images = getBodyValue(body, 'images');
+  if (Array.isArray(images)) {
+    propertyData.images = images.filter((image): image is string => typeof image === 'string');
   }
 
-  const amenities = normalizeAmenities(body.amenities);
+  const amenities = normalizeAmenities(getBodyValue(body, 'amenities'));
   if (amenities || options.includeDefaults) {
     propertyData.amenities = amenities ?? { lifestyle: [], facilities: [], security: [] };
   }
 
-  const price = parseOptionalFloat(body.price);
+  const price = parseOptionalFloat(getBodyValue(body, 'price'));
   if (price !== undefined) propertyData.price = price;
 
-  const buildupArea = parseOptionalFloat(body.buildupArea);
+  const buildupArea = parseOptionalFloat(getBodyValue(body, 'buildupArea'));
   if (buildupArea !== undefined) propertyData.buildupArea = buildupArea;
 
-  const latitude = parseOptionalFloat(body.latitude);
+  const latitude = parseOptionalFloat(getBodyValue(body, 'latitude'));
   if (latitude !== undefined) propertyData.latitude = latitude;
 
-  const longitude = parseOptionalFloat(body.longitude);
+  const longitude = parseOptionalFloat(getBodyValue(body, 'longitude'));
   if (longitude !== undefined) propertyData.longitude = longitude;
 
-  const bedrooms = parseOptionalInteger(body.bedrooms);
+  const bedrooms = parseOptionalInteger(getBodyValue(body, 'bedrooms'));
   if (bedrooms !== undefined) propertyData.bedrooms = bedrooms;
 
-  const bathrooms = parseOptionalInteger(body.bathrooms);
+  const bathrooms = parseOptionalInteger(getBodyValue(body, 'bathrooms'));
   if (bathrooms !== undefined) propertyData.bathrooms = bathrooms;
 
-  const yearOfBuild = parseOptionalInteger(body.yearOfBuild);
+  const yearOfBuild = parseOptionalInteger(getBodyValue(body, 'yearOfBuild'));
   if (yearOfBuild !== undefined) propertyData.yearOfBuild = yearOfBuild;
 
   if (options.userId) {

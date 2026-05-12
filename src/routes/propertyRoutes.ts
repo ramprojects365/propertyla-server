@@ -15,6 +15,7 @@ router.get('/:id', propertyController.getPropertyById);
 router.post('/', authenticateToken, propertyController.createProperty);
 
 router.put('/:id', authenticateToken, propertyController.updateProperty);
+router.patch('/:id', authenticateToken, propertyController.updateProperty);
 
 router.delete('/:id', authenticateToken, propertyController.deleteProperty);
 

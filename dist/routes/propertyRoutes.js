@@ -8,6 +8,7 @@ router.get('/my-properties', authenticateToken, propertyController.getUserProper
 router.get('/:id', propertyController.getPropertyById);
 router.post('/', authenticateToken, propertyController.createProperty);
 router.put('/:id', authenticateToken, propertyController.updateProperty);
+router.patch('/:id', authenticateToken, propertyController.updateProperty);
 router.delete('/:id', authenticateToken, propertyController.deleteProperty);
 export default router;
 //# sourceMappingURL=propertyRoutes.js.map
