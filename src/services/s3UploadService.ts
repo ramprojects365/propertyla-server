@@ -1,5 +1,7 @@
 import AWS from 'aws-sdk';
 import crypto from 'crypto';
+import sharp from 'sharp';
+import { validateImageFile } from '../utils/imageValidation.js';
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -8,7 +10,11 @@ const s3 = new AWS.S3({
 });
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
-const AWS_CLOUDFRONT_URL = process.env.AWS_CLOUDFRONT_URL || `https://${BUCKET_NAME}.s3.amazonaws.com`;
+const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
+const AWS_CLOUDFRONT_URL =
+  process.env.AWS_CLOUDFRONT_URL ||
+  `https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com`;
+
 const MAX_IMAGES = 15;
 
 if (!BUCKET_NAME) {
@@ -20,7 +26,6 @@ interface UploadParams {
   Key: string;
   Body: Buffer;
   ContentType: string;
-  ACL?: 'public-read' | 'private';
 }
 
 /**
@@ -31,29 +36,48 @@ const generateUniqueIdentifier = (): string => {
 };
 
 /**
- * Upload a single image to S3
+ * Convert image buffer to WebP
  */
-export const uploadImageToS3 = async (
+const convertToWebP = async (file: Express.Multer.File): Promise<Buffer> => {
+  return sharp(file.buffer)
+    .rotate()
+    .resize({
+      width: 1200,
+      withoutEnlargement: true
+    })
+    .webp({
+      quality: 80
+    })
+    .toBuffer();
+};
+
+/**
+ * Build public image URL
+ */
+const buildImageUrl = (key: string): string => {
+  return `${AWS_CLOUDFRONT_URL.replace(/\/$/, '')}/${key}`;
+};
+
+const uploadValidatedImageToS3 = async (
   file: Express.Multer.File,
   folderPath: string = 'uploads'
 ): Promise<string> => {
-  const fileExtension = file.originalname.split('.').pop();
   const timestamp = Date.now();
   const uniqueId = generateUniqueIdentifier();
-  const key = `${folderPath}/${timestamp}-${uniqueId}.${fileExtension}`;
-
-  const params: UploadParams = {
-    Bucket: BUCKET_NAME,
-    Key: key,
-    Body: file.buffer,
-    ContentType: file.mimetype,
-   // ACL: 'public-read'
-  };
-
+  // Always save as .webp
+  const key = `${folderPath}/${timestamp}-${uniqueId}.webp`;
   try {
-    const result = await s3.upload(params).promise();
-    // Return CloudFront URL if configured, otherwise S3 URL
-    return result.Location.replace(`https://${BUCKET_NAME}.s3.amazonaws.com`, AWS_CLOUDFRONT_URL);
+    const webpBuffer = await convertToWebP(file);
+
+    const params: UploadParams = {
+      Bucket: BUCKET_NAME,
+      Key: key,
+      Body: webpBuffer,
+      ContentType: 'image/webp'
+    };
+
+    await s3.upload(params).promise();
+    return buildImageUrl(key);
   } catch (error) {
     console.error('S3 upload error:', error);
     throw new Error(`Failed to upload image to S3: ${error}`);
@@ -61,7 +85,18 @@ export const uploadImageToS3 = async (
 };
 
 /**
- * Upload multiple images to S3
+ * Upload a single image to S3 as WebP
+ */
+export const uploadImageToS3 = async (
+  file: Express.Multer.File,
+  folderPath: string = 'uploads'
+): Promise<string> => {
+  await validateImageFile(file);
+  return uploadValidatedImageToS3(file, folderPath);
+};
+
+/**
+ * Upload multiple images to S3 as WebP
  */
 export const uploadMultipleImagesToS3 = async (
   files: Express.Multer.File[],
@@ -71,15 +106,27 @@ export const uploadMultipleImagesToS3 = async (
     throw new Error(`Maximum ${MAX_IMAGES} images allowed`);
   }
 
-  const uploadPromises = files.map(file => uploadImageToS3(file, folderPath));
+  await Promise.all(files.map(file => validateImageFile(file)));
 
   try {
-    const urls = await Promise.all(uploadPromises);
-    return urls;
+    const uploadPromises = files.map(file => uploadValidatedImageToS3(file, folderPath));
+    return await Promise.all(uploadPromises);
   } catch (error) {
+    if (error instanceof Error && 'status' in error) {
+      throw error;
+    }
+
     console.error('Bulk S3 upload error:', error);
     throw new Error(`Failed to upload images to S3: ${error}`);
   }
+};
+
+/**
+ * Extract S3 key from image URL
+ */
+const extractKeyFromUrl = (imageUrl: string): string => {
+  const urlParts = new URL(imageUrl);
+  return decodeURIComponent(urlParts.pathname.substring(1));
 };
 
 /**
@@ -87,9 +134,7 @@ export const uploadMultipleImagesToS3 = async (
  */
 export const deleteImageFromS3 = async (imageUrl: string): Promise<void> => {
   try {
-    // Extract S3 key from URL
-    const urlParts = new URL(imageUrl);
-    const key = urlParts.pathname.substring(1); // Remove leading slash
+    const key = extractKeyFromUrl(imageUrl);
 
     const params = {
       Bucket: BUCKET_NAME,
@@ -106,10 +151,11 @@ export const deleteImageFromS3 = async (imageUrl: string): Promise<void> => {
 /**
  * Delete multiple images from S3
  */
-export const deleteMultipleImagesFromS3 = async (imageUrls: string[]): Promise<void> => {
-  const deletePromises = imageUrls.map(url => deleteImageFromS3(url));
-
+export const deleteMultipleImagesFromS3 = async (
+  imageUrls: string[]
+): Promise<void> => {
   try {
+    const deletePromises = imageUrls.map(url => deleteImageFromS3(url));
     await Promise.all(deletePromises);
   } catch (error) {
     console.error('Bulk S3 delete error:', error);
@@ -118,12 +164,14 @@ export const deleteMultipleImagesFromS3 = async (imageUrls: string[]): Promise<v
 };
 
 /**
- * Get S3 signed URL (for private files)
+ * Get S3 signed URL for private files
  */
-export const getSignedUrl = async (imageUrl: string, expiresIn: number = 3600): Promise<string> => {
+export const getSignedUrl = async (
+  imageUrl: string,
+  expiresIn: number = 3600
+): Promise<string> => {
   try {
-    const urlParts = new URL(imageUrl);
-    const key = urlParts.pathname.substring(1);
+    const key = extractKeyFromUrl(imageUrl);
 
     const signedUrl = s3.getSignedUrl('getObject', {
       Bucket: BUCKET_NAME,

@@ -27,7 +27,7 @@ export const uploadImages = async (req, res) => {
         });
     }
     catch (error) {
-        res.status(500).json({
+        res.status(error.status || 500).json({
             success: false,
             message: error.message || 'Failed to upload images'
         });
@@ -53,7 +53,7 @@ export const uploadSingleImage = async (req, res) => {
         });
     }
     catch (error) {
-        res.status(500).json({
+        res.status(error.status || 500).json({
             success: false,
             message: error.message || 'Failed to upload image'
         });

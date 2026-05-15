@@ -91,6 +91,14 @@ app.use((req: Request, res: Response) => {
 });
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  if ('status' in err && typeof err.status === 'number') {
+    res.status(err.status).json({
+      success: false,
+      message: err.message
+    });
+    return;
+  }
+
   if (err instanceof multer.MulterError) {
     const messages: Record<string, string> = {
       LIMIT_FILE_SIZE: 'File is too large. Images can be up to 5MB.',

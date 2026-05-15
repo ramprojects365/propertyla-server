@@ -33,7 +33,7 @@ export const uploadImages = async (req: Request, res: Response): Promise<void> =
       }
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message || 'Failed to upload images'
     });
@@ -62,7 +62,7 @@ export const uploadSingleImage = async (req: Request, res: Response): Promise<vo
       }
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message || 'Failed to upload image'
     });

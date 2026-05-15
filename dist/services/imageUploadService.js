@@ -1,14 +1,15 @@
 import multer from 'multer';
 import * as s3Service from './s3UploadService.js';
+import { PROPERTY_IMAGE_MIME_TYPES, validateImageMimeType } from '../utils/imageValidation.js';
 // Configure multer for memory storage (files will be uploaded to S3, not disk)
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    try {
+        validateImageMimeType(file, PROPERTY_IMAGE_MIME_TYPES);
         cb(null, true);
     }
-    else {
-        cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.'));
+    catch (error) {
+        cb(error);
     }
 };
 export const upload = multer({

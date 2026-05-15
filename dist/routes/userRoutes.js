@@ -3,15 +3,16 @@ import multer from 'multer';
 import { body } from 'express-validator';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadProfileImage, getProfile, updateProfile } from '../controllers/userController.js';
+import { AVATAR_IMAGE_MIME_TYPES, validateImageMimeType } from '../utils/imageValidation.js';
 // Use memory storage since files will be uploaded to S3
 const avatarStorage = multer.memoryStorage();
 const avatarFileFilter = (_req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (allowed.includes(file.mimetype)) {
+    try {
+        validateImageMimeType(file, AVATAR_IMAGE_MIME_TYPES);
         cb(null, true);
     }
-    else {
-        cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
+    catch (error) {
+        cb(error);
     }
 };
 const avatarUpload = multer({
