@@ -214,6 +214,14 @@ __decorate([
 ], Property.prototype, "images", void 0);
 __decorate([
     Column({
+        type: 'text',
+        nullable: true,
+        name: 'floor_plan'
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "floorPlan", void 0);
+__decorate([
+    Column({
         type: 'varchar',
         length: 50,
         default: 'active'

@@ -1,4 +1,14 @@
 import { User } from './User.js';
+export interface PropertyImage {
+    url: string;
+    fileName?: string;
+    order?: number;
+    category?: string;
+    customPlaceName?: string;
+    displayPlace?: string;
+    caption?: string;
+    isCover?: boolean;
+}
 export declare class Property {
     id: string;
     title: string;
@@ -30,7 +40,8 @@ export declare class Property {
         facilities: string[];
         security: string[];
     };
-    images?: string[];
+    images?: Array<string | PropertyImage>;
+    floorPlan?: string;
     status: string;
     userId: string;
     user: User;

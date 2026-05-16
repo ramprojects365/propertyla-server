@@ -9,6 +9,17 @@ import {
 } from 'typeorm';
 import { User } from './User.js';
 
+export interface PropertyImage {
+  url: string;
+  fileName?: string;
+  order?: number;
+  category?: string;
+  customPlaceName?: string;
+  displayPlace?: string;
+  caption?: string;
+  isCover?: boolean;
+}
+
 @Entity('properties')
 export class Property {
   @PrimaryGeneratedColumn('uuid')
@@ -187,7 +198,14 @@ export class Property {
     type: 'jsonb',
     nullable: true
   })
-  images?: string[];
+  images?: Array<string | PropertyImage>;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+    name: 'floor_plan'
+  })
+  floorPlan?: string;
 
   @Column({
     type: 'varchar',

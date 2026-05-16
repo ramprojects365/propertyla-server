@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import * as propertyService from '../services/propertyService.js';
-import { Property } from '../entities/Property.js';
+import { Property, PropertyImage } from '../entities/Property.js';
 import { AppError } from '../utils/errors.js';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -41,6 +41,11 @@ const parseOptionalBoolean = (value: unknown): boolean | undefined => {
   return Boolean(value);
 };
 
+const parseOptionalPositiveInteger = (value: unknown): number | undefined => {
+  const parsed = parseOptionalInteger(value);
+  return parsed !== undefined && parsed > 0 ? parsed : undefined;
+};
+
 const normalizeAmenities = (value: unknown): Property['amenities'] | undefined => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     const amenities = value as Partial<Property['amenities']>;
@@ -52,6 +57,44 @@ const normalizeAmenities = (value: unknown): Property['amenities'] | undefined =
   }
 
   return undefined;
+};
+
+const normalizeImageItem = (value: unknown, index: number): string | PropertyImage | null => {
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim();
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const image = value as Record<string, unknown>;
+  const rawUrl = image.url ?? image.imageUrl ?? image.src;
+
+  if (typeof rawUrl !== 'string' || !rawUrl.trim()) {
+    return null;
+  }
+
+  const category = typeof image.category === 'string' && image.category.trim()
+    ? image.category.trim()
+    : 'other';
+  const customPlaceName = typeof image.customPlaceName === 'string'
+    ? image.customPlaceName.trim()
+    : '';
+  const displayPlace = typeof image.displayPlace === 'string' && image.displayPlace.trim()
+    ? image.displayPlace.trim()
+    : customPlaceName || category;
+
+  return {
+    url: rawUrl.trim(),
+    fileName: typeof image.fileName === 'string' ? image.fileName : undefined,
+    order: parseOptionalPositiveInteger(image.order) ?? index + 1,
+    category,
+    customPlaceName,
+    displayPlace,
+    caption: typeof image.caption === 'string' ? image.caption.trim() : displayPlace,
+    isCover: parseOptionalBoolean(image.isCover) ?? false
+  };
 };
 
 type PropertyBodyField = keyof Pick<
@@ -75,6 +118,7 @@ type PropertyBodyField = keyof Pick<
   | 'status'
   | 'negotiable'
   | 'images'
+  | 'floorPlan'
   | 'amenities'
   | 'price'
   | 'buildupArea'
@@ -105,6 +149,7 @@ const propertyBodyKeys: Record<PropertyBodyField, string[]> = {
   status: ['status'],
   negotiable: ['negotiable'],
   images: ['images'],
+  floorPlan: ['floorPlan', 'floor_plan'],
   amenities: ['amenities'],
   price: ['price'],
   buildupArea: ['buildupArea', 'buildup_area'],
@@ -150,6 +195,7 @@ const buildPropertyPayload = (
     'furnishing',
     'availability',
     'floorLevel',
+    'floorPlan',
     'status'
   ];
 
@@ -171,7 +217,26 @@ const buildPropertyPayload = (
 
   const images = getBodyValue(body, 'images');
   if (Array.isArray(images)) {
-    propertyData.images = images.filter((image): image is string => typeof image === 'string');
+    const normalizedImages = images
+      .map((image, index) => normalizeImageItem(image, index))
+      .filter((image): image is string | PropertyImage => image !== null);
+    const hasObjectCover = normalizedImages.some(
+      (image) => typeof image !== 'string' && image.isCover
+    );
+    let coverAssigned = false;
+
+    propertyData.images = normalizedImages.map((image, index) => {
+      if (typeof image === 'string') return image;
+
+      const shouldBeCover = hasObjectCover ? Boolean(image.isCover && !coverAssigned) : index === 0;
+      if (shouldBeCover) coverAssigned = true;
+
+      return {
+        ...image,
+        order: index + 1,
+        isCover: shouldBeCover
+      };
+    });
   }
 
   const amenities = normalizeAmenities(getBodyValue(body, 'amenities'));

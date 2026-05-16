@@ -28,6 +28,10 @@ const parseOptionalBoolean = (value) => {
     }
     return Boolean(value);
 };
+const parseOptionalPositiveInteger = (value) => {
+    const parsed = parseOptionalInteger(value);
+    return parsed !== undefined && parsed > 0 ? parsed : undefined;
+};
 const normalizeAmenities = (value) => {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
         const amenities = value;
@@ -38,6 +42,38 @@ const normalizeAmenities = (value) => {
         };
     }
     return undefined;
+};
+const normalizeImageItem = (value, index) => {
+    if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+    }
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return null;
+    }
+    const image = value;
+    const rawUrl = image.url ?? image.imageUrl ?? image.src;
+    if (typeof rawUrl !== 'string' || !rawUrl.trim()) {
+        return null;
+    }
+    const category = typeof image.category === 'string' && image.category.trim()
+        ? image.category.trim()
+        : 'other';
+    const customPlaceName = typeof image.customPlaceName === 'string'
+        ? image.customPlaceName.trim()
+        : '';
+    const displayPlace = typeof image.displayPlace === 'string' && image.displayPlace.trim()
+        ? image.displayPlace.trim()
+        : customPlaceName || category;
+    return {
+        url: rawUrl.trim(),
+        fileName: typeof image.fileName === 'string' ? image.fileName : undefined,
+        order: parseOptionalPositiveInteger(image.order) ?? index + 1,
+        category,
+        customPlaceName,
+        displayPlace,
+        caption: typeof image.caption === 'string' ? image.caption.trim() : displayPlace,
+        isCover: parseOptionalBoolean(image.isCover) ?? false
+    };
 };
 const propertyBodyKeys = {
     title: ['title'],
@@ -59,6 +95,7 @@ const propertyBodyKeys = {
     status: ['status'],
     negotiable: ['negotiable'],
     images: ['images'],
+    floorPlan: ['floorPlan', 'floor_plan'],
     amenities: ['amenities'],
     price: ['price'],
     buildupArea: ['buildupArea', 'buildup_area'],
@@ -95,6 +132,7 @@ const buildPropertyPayload = (body, options = {}) => {
         'furnishing',
         'availability',
         'floorLevel',
+        'floorPlan',
         'status'
     ];
     for (const field of stringFields) {
@@ -112,7 +150,23 @@ const buildPropertyPayload = (body, options = {}) => {
     }
     const images = getBodyValue(body, 'images');
     if (Array.isArray(images)) {
-        propertyData.images = images.filter((image) => typeof image === 'string');
+        const normalizedImages = images
+            .map((image, index) => normalizeImageItem(image, index))
+            .filter((image) => image !== null);
+        const hasObjectCover = normalizedImages.some((image) => typeof image !== 'string' && image.isCover);
+        let coverAssigned = false;
+        propertyData.images = normalizedImages.map((image, index) => {
+            if (typeof image === 'string')
+                return image;
+            const shouldBeCover = hasObjectCover ? Boolean(image.isCover && !coverAssigned) : index === 0;
+            if (shouldBeCover)
+                coverAssigned = true;
+            return {
+                ...image,
+                order: index + 1,
+                isCover: shouldBeCover
+            };
+        });
     }
     const amenities = normalizeAmenities(getBodyValue(body, 'amenities'));
     if (amenities || options.includeDefaults) {
