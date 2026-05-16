@@ -13,10 +13,27 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { email, password } = req.body;
+    const {
+      email,
+      password,
+      username,
+      phone_number,
+      phoneNumber,
+      userType,
+      user_type,
+      renNumber,
+      ren_number,
+      renStatus,
+      ren_status
+    } = req.body;
 
     const result = await authService.registerUser({
+      username,
       email,
+      phoneNumber: phoneNumber ?? phone_number,
+      userType: userType ?? user_type,
+      renNumber: renNumber ?? ren_number,
+      renStatus: renStatus ?? ren_status,
       password
     });
 
@@ -109,13 +126,33 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const { username: usernameField, user_name, phone_number, phoneNumber, full_name, bio, company_name, ic_passport, designation, experience_years } = req.body;
+    const {
+      username: usernameField,
+      user_name,
+      phone_number,
+      phoneNumber,
+      userType,
+      user_type,
+      renNumber,
+      ren_number,
+      renStatus,
+      ren_status,
+      full_name,
+      bio,
+      company_name,
+      ic_passport,
+      designation,
+      experience_years
+    } = req.body;
     const username = usernameField ?? user_name;
     const phone = phone_number ?? phoneNumber;
 
     const updates: Record<string, any> = {};
     if (username !== undefined) updates.username = username;
     if (phone !== undefined) updates.phoneNumber = phone || null;
+    if ((userType ?? user_type) !== undefined) updates.userType = (userType ?? user_type) || null;
+    if ((renNumber ?? ren_number) !== undefined) updates.renNumber = (renNumber ?? ren_number) || null;
+    if ((renStatus ?? ren_status) !== undefined) updates.renStatus = (renStatus ?? ren_status) || null;
     if (full_name !== undefined) updates.fullName = full_name || null;
     if (bio !== undefined) updates.bio = bio || null;
     if (company_name !== undefined) updates.companyName = company_name || null;

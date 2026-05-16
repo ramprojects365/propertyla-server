@@ -20,10 +20,6 @@ const validatePropertyData = (data: Partial<Property>): void => {
     throw new AppError('Listing type must be either "rent" or "sale"', 400);
   }
 
-  if (data.tenure && !['freehold', 'leasehold'].includes(data.tenure)) {
-    throw new AppError('Tenure must be either "freehold" or "leasehold"', 400);
-  }
-
   if (data.furnishing && !['Fully', 'Partially', 'Unfurnished'].includes(data.furnishing)) {
     throw new AppError('Furnishing must be "Fully", "Partially", or "Unfurnished"', 400);
   }
@@ -44,6 +40,22 @@ const validatePropertyData = (data: Partial<Property>): void => {
 
   if (data.buildupArea !== undefined && data.buildupArea < 0) {
     throw new AppError('Buildup area cannot be negative', 400);
+  }
+
+  if (data.landSize !== undefined && data.landSize < 0) {
+    throw new AppError('Land size cannot be negative', 400);
+  }
+
+  if (data.depositAmount !== undefined && data.depositAmount < 0) {
+    throw new AppError('Deposit amount cannot be negative', 400);
+  }
+
+  if (data.maintenanceFee !== undefined && data.maintenanceFee < 0) {
+    throw new AppError('Maintenance fee cannot be negative', 400);
+  }
+
+  if (data.sinkingFund !== undefined && data.sinkingFund < 0) {
+    throw new AppError('Sinking fund cannot be negative', 400);
   }
 
   if (data.bedrooms !== undefined && (data.bedrooms < 0 || !Number.isInteger(data.bedrooms))) {
@@ -89,10 +101,6 @@ export const createProperty = async (propertyData: Partial<Property>): Promise<P
 
   if (!propertyData.propertyType) {
     throw new AppError('Property type is required', 400);
-  }
-
-  if (!propertyData.tenure) {
-    throw new AppError('Tenure is required', 400);
   }
 
   validatePropertyData(propertyData);

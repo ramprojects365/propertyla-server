@@ -3,6 +3,9 @@ export declare class User {
     username: string;
     email: string;
     phoneNumber: string | null;
+    userType: string | null;
+    renNumber: string | null;
+    renStatus: string | null;
     profileImage: string | null;
     fullName: string | null;
     bio: string | null;
@@ -23,6 +26,9 @@ export declare class User {
         username: string;
         email: string;
         phoneNumber: string | null;
+        userType: string | null;
+        renNumber: string | null;
+        renStatus: string | null;
         profileImage: string | null;
         fullName: string | null;
         bio: string | null;
@@ -39,6 +45,9 @@ export declare class User {
         username: string;
         email: string;
         phoneNumber: string | null;
+        userType: string | null;
+        renNumber: string | null;
+        renStatus: string | null;
         profileImage: string | null;
         fullName: string | null;
         bio: string | null;

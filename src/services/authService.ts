@@ -49,7 +49,18 @@ const generateUsernameFromEmail = (email: string): string => {
 
 export const registerUser = async (registrationData: RegistrationData) => {
   const { email, password } = registrationData;
-  const username = generateUsernameFromEmail(email);
+  const username = registrationData.username?.trim() || generateUsernameFromEmail(email);
+  const userType = registrationData.userType?.trim() || null;
+  const renNumber = registrationData.renNumber?.trim() || null;
+  const requestedRenStatus = registrationData.renStatus?.trim();
+  const normalizedUserType = userType?.toLowerCase();
+  const renStatus = requestedRenStatus || (
+    normalizedUserType === 'agent'
+      ? (renNumber ? 'pending' : 'missing')
+      : normalizedUserType
+        ? 'not_applicable'
+        : null
+  );
 
   const existingUser = await userRepository.findUserByEmail(email);
 
@@ -69,6 +80,10 @@ export const registerUser = async (registrationData: RegistrationData) => {
   const newUser = await userRepository.createUser({
     username,
     email,
+    phoneNumber: registrationData.phoneNumber,
+    userType,
+    renNumber,
+    renStatus,
     passwordHash,
     verificationToken,
     verificationExpiry,
@@ -85,6 +100,9 @@ export const registerUser = async (registrationData: RegistrationData) => {
     userId: newUser.id,
     username: newUser.username,
     email: newUser.email,
+    userType: newUser.userType,
+    renNumber: newUser.renNumber,
+    renStatus: newUser.renStatus,
     emailVerified: newUser.emailVerified
   };
 };
@@ -128,6 +146,9 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthToke
       username: user.username,
       email: user.email,
       phoneNumber: user.phoneNumber,
+      userType: user.userType,
+      renNumber: user.renNumber,
+      renStatus: user.renStatus,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
@@ -180,6 +201,9 @@ export const getUserProfile = async (userId: string): Promise<UserProfile> => {
     username: user.username,
     email: user.email,
     phoneNumber: user.phoneNumber,
+    userType: user.userType,
+    renNumber: user.renNumber,
+    renStatus: user.renStatus,
     profileImage: user.profileImage,
     fullName: user.fullName,
     bio: user.bio,
@@ -211,6 +235,9 @@ export const updateUserProfile = async (
     username: updated.username,
     email: updated.email,
     phoneNumber: updated.phoneNumber,
+    userType: updated.userType,
+    renNumber: updated.renNumber,
+    renStatus: updated.renStatus,
     fullName: updated.fullName,
     bio: updated.bio,
     companyName: updated.companyName,
@@ -231,6 +258,9 @@ export const uploadProfileImage = async (userId: string, imageUrl: string): Prom
     username: updated.username,
     email: updated.email,
     phoneNumber: updated.phoneNumber,
+    userType: updated.userType,
+    renNumber: updated.renNumber,
+    renStatus: updated.renStatus,
     profileImage: updated.profileImage,
     fullName: updated.fullName,
     bio: updated.bio,
@@ -338,6 +368,9 @@ export const verifyOtpByEmail = async (
       username: updatedUser.username,
       email: updatedUser.email,
       phoneNumber: updatedUser.phoneNumber,
+      userType: updatedUser.userType,
+      renNumber: updatedUser.renNumber,
+      renStatus: updatedUser.renStatus,
       emailVerified: updatedUser.emailVerified,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt

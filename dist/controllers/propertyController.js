@@ -99,11 +99,23 @@ const propertyBodyKeys = {
     amenities: ['amenities'],
     price: ['price'],
     buildupArea: ['buildupArea', 'buildup_area'],
+    landSize: ['landSize', 'land_size'],
     latitude: ['latitude'],
     longitude: ['longitude'],
     bedrooms: ['bedrooms'],
     bathrooms: ['bathrooms'],
-    yearOfBuild: ['yearOfBuild', 'year_of_build']
+    yearOfBuild: ['yearOfBuild', 'year_of_build'],
+    yearOfCompletion: ['yearOfCompletion', 'year_of_completion'],
+    carParkAllocation: ['carParkAllocation', 'car_park_allocation'],
+    facingDirection: ['facingDirection', 'facing_direction'],
+    renovationStatus: ['renovationStatus', 'renovation_status'],
+    depositAmount: ['depositAmount', 'deposit_amount'],
+    minimumRentalPeriod: ['minimumRentalPeriod', 'minimum_rental_period'],
+    petPolicy: ['petPolicy', 'pet_policy'],
+    preferredTenantType: ['preferredTenantType', 'preferred_tenant_type'],
+    maintenanceFee: ['maintenanceFee', 'maintenance_fee'],
+    sinkingFund: ['sinkingFund', 'sinking_fund'],
+    bumiLotStatus: ['bumiLotStatus', 'bumi_lot_status']
 };
 const getBodyValue = (body, field) => {
     for (const key of propertyBodyKeys[field]) {
@@ -133,6 +145,13 @@ const buildPropertyPayload = (body, options = {}) => {
         'availability',
         'floorLevel',
         'floorPlan',
+        'carParkAllocation',
+        'facingDirection',
+        'renovationStatus',
+        'minimumRentalPeriod',
+        'petPolicy',
+        'preferredTenantType',
+        'bumiLotStatus',
         'status'
     ];
     for (const field of stringFields) {
@@ -178,6 +197,18 @@ const buildPropertyPayload = (body, options = {}) => {
     const buildupArea = parseOptionalFloat(getBodyValue(body, 'buildupArea'));
     if (buildupArea !== undefined)
         propertyData.buildupArea = buildupArea;
+    const landSize = parseOptionalFloat(getBodyValue(body, 'landSize'));
+    if (landSize !== undefined)
+        propertyData.landSize = landSize;
+    const depositAmount = parseOptionalFloat(getBodyValue(body, 'depositAmount'));
+    if (depositAmount !== undefined)
+        propertyData.depositAmount = depositAmount;
+    const maintenanceFee = parseOptionalFloat(getBodyValue(body, 'maintenanceFee'));
+    if (maintenanceFee !== undefined)
+        propertyData.maintenanceFee = maintenanceFee;
+    const sinkingFund = parseOptionalFloat(getBodyValue(body, 'sinkingFund'));
+    if (sinkingFund !== undefined)
+        propertyData.sinkingFund = sinkingFund;
     const latitude = parseOptionalFloat(getBodyValue(body, 'latitude'));
     if (latitude !== undefined)
         propertyData.latitude = latitude;
@@ -193,6 +224,9 @@ const buildPropertyPayload = (body, options = {}) => {
     const yearOfBuild = parseOptionalInteger(getBodyValue(body, 'yearOfBuild'));
     if (yearOfBuild !== undefined)
         propertyData.yearOfBuild = yearOfBuild;
+    const yearOfCompletion = parseOptionalInteger(getBodyValue(body, 'yearOfCompletion'));
+    if (yearOfCompletion !== undefined)
+        propertyData.yearOfCompletion = yearOfCompletion;
     if (options.userId) {
         propertyData.userId = options.userId;
     }

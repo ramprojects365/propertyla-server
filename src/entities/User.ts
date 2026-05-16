@@ -14,6 +14,15 @@ export class User {
   @Column({ type: 'varchar', length: 20, nullable: true, name: 'phone_number' })
   phoneNumber: string | null;
 
+  @Column({ type: 'varchar', length: 30, nullable: true, name: 'user_type' })
+  userType: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true, name: 'ren_number' })
+  renNumber: string | null;
+
+  @Column({ type: 'varchar', length: 30, nullable: true, name: 'ren_status' })
+  renStatus: string | null;
+
   @Column({ type: 'varchar', length: 500, nullable: true, name: 'profile_image' })
   profileImage: string | null;
 
@@ -65,6 +74,9 @@ export class User {
       username: this.username,
       email: this.email,
       phoneNumber: this.phoneNumber,
+      userType: this.userType,
+      renNumber: this.renNumber,
+      renStatus: this.renStatus,
       profileImage: this.profileImage,
       fullName: this.fullName,
       bio: this.bio,
@@ -84,6 +96,9 @@ export class User {
       username: this.username,
       email: this.email,
       phoneNumber: this.phoneNumber,
+      userType: this.userType,
+      renNumber: this.renNumber,
+      renStatus: this.renStatus,
       profileImage: this.profileImage,
       fullName: this.fullName,
       bio: this.bio,

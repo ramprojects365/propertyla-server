@@ -25,6 +25,9 @@ export interface UserProfile {
     username: string;
     email: string;
     phoneNumber?: string | null;
+    userType?: string | null;
+    renNumber?: string | null;
+    renStatus?: string | null;
     profileImage?: string | null;
     fullName?: string | null;
     bio?: string | null;
@@ -39,6 +42,9 @@ export interface UserProfile {
 export interface UpdateProfileData {
     username?: string;
     phoneNumber?: string | null;
+    userType?: string | null;
+    renNumber?: string | null;
+    renStatus?: string | null;
     fullName?: string | null;
     bio?: string | null;
     companyName?: string | null;
@@ -50,6 +56,9 @@ export interface RegistrationData {
     username?: string;
     email: string;
     phoneNumber?: string;
+    userType?: string;
+    renNumber?: string;
+    renStatus?: string;
     password: string;
 }
 export interface LoginCredentials {
@@ -64,6 +73,9 @@ export interface UserRepositoryData {
     username: string;
     email: string;
     phoneNumber?: string;
+    userType?: string | null;
+    renNumber?: string | null;
+    renStatus?: string | null;
     passwordHash: string;
     verificationToken: string;
     verificationExpiry: Date;

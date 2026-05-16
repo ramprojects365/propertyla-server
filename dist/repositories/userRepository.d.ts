@@ -15,6 +15,9 @@ export declare const deleteUser: (userId: string) => Promise<void>;
 export declare const updateUser: (userId: string, updates: {
     username?: string;
     phoneNumber?: string | null;
+    userType?: string | null;
+    renNumber?: string | null;
+    renStatus?: string | null;
     fullName?: string | null;
     bio?: string | null;
     companyName?: string | null;

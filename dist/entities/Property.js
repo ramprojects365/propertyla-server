@@ -42,7 +42,8 @@ __decorate([
 __decorate([
     Column({
         type: 'varchar',
-        length: 50
+        length: 50,
+        nullable: true
     }),
     __metadata("design:type", String)
 ], Property.prototype, "tenure", void 0);
@@ -146,6 +147,16 @@ __decorate([
 ], Property.prototype, "buildupArea", void 0);
 __decorate([
     Column({
+        type: 'numeric',
+        precision: 10,
+        scale: 2,
+        nullable: true,
+        name: 'land_size'
+    }),
+    __metadata("design:type", Number)
+], Property.prototype, "landSize", void 0);
+__decorate([
+    Column({
         type: 'varchar',
         length: 20,
         nullable: true
@@ -191,6 +202,107 @@ __decorate([
     }),
     __metadata("design:type", Number)
 ], Property.prototype, "yearOfBuild", void 0);
+__decorate([
+    Column({
+        type: 'integer',
+        nullable: true,
+        name: 'year_of_completion'
+    }),
+    __metadata("design:type", Number)
+], Property.prototype, "yearOfCompletion", void 0);
+__decorate([
+    Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+        name: 'car_park_allocation'
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "carParkAllocation", void 0);
+__decorate([
+    Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+        name: 'facing_direction'
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "facingDirection", void 0);
+__decorate([
+    Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+        name: 'renovation_status'
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "renovationStatus", void 0);
+__decorate([
+    Column({
+        type: 'numeric',
+        precision: 15,
+        scale: 2,
+        nullable: true,
+        name: 'deposit_amount'
+    }),
+    __metadata("design:type", Number)
+], Property.prototype, "depositAmount", void 0);
+__decorate([
+    Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+        name: 'minimum_rental_period'
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "minimumRentalPeriod", void 0);
+__decorate([
+    Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+        name: 'pet_policy'
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "petPolicy", void 0);
+__decorate([
+    Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+        name: 'preferred_tenant_type'
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "preferredTenantType", void 0);
+__decorate([
+    Column({
+        type: 'numeric',
+        precision: 15,
+        scale: 2,
+        nullable: true,
+        name: 'maintenance_fee'
+    }),
+    __metadata("design:type", Number)
+], Property.prototype, "maintenanceFee", void 0);
+__decorate([
+    Column({
+        type: 'numeric',
+        precision: 15,
+        scale: 2,
+        nullable: true,
+        name: 'sinking_fund'
+    }),
+    __metadata("design:type", Number)
+], Property.prototype, "sinkingFund", void 0);
+__decorate([
+    Column({
+        type: 'varchar',
+        length: 100,
+        nullable: true,
+        name: 'bumi_lot_status'
+    }),
+    __metadata("design:type", String)
+], Property.prototype, "bumiLotStatus", void 0);
 __decorate([
     Column({
         type: 'boolean',

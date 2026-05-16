@@ -47,9 +47,10 @@ export class Property {
 
   @Column({
     type: 'varchar',
-    length: 50
+    length: 50,
+    nullable: true
   })
-  tenure!: 'freehold' | 'leasehold';
+  tenure?: string;
 
   @Column({
     type: 'varchar',
@@ -138,6 +139,15 @@ export class Property {
   buildupArea?: number;
 
   @Column({
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    name: 'land_size'
+  })
+  landSize?: number;
+
+  @Column({
     type: 'varchar',
     length: 20,
     nullable: true
@@ -177,6 +187,96 @@ export class Property {
     name: 'year_of_build'
   })
   yearOfBuild?: number;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+    name: 'year_of_completion'
+  })
+  yearOfCompletion?: number;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'car_park_allocation'
+  })
+  carParkAllocation?: string;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'facing_direction'
+  })
+  facingDirection?: string;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'renovation_status'
+  })
+  renovationStatus?: string;
+
+  @Column({
+    type: 'numeric',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+    name: 'deposit_amount'
+  })
+  depositAmount?: number;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'minimum_rental_period'
+  })
+  minimumRentalPeriod?: string;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'pet_policy'
+  })
+  petPolicy?: string;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'preferred_tenant_type'
+  })
+  preferredTenantType?: string;
+
+  @Column({
+    type: 'numeric',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+    name: 'maintenance_fee'
+  })
+  maintenanceFee?: number;
+
+  @Column({
+    type: 'numeric',
+    precision: 15,
+    scale: 2,
+    nullable: true,
+    name: 'sinking_fund'
+  })
+  sinkingFund?: number;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'bumi_lot_status'
+  })
+  bumiLotStatus?: string;
 
   @Column({
     type: 'boolean',

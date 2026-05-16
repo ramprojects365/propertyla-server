@@ -15,6 +15,9 @@ let User = class User {
             username: this.username,
             email: this.email,
             phoneNumber: this.phoneNumber,
+            userType: this.userType,
+            renNumber: this.renNumber,
+            renStatus: this.renStatus,
             profileImage: this.profileImage,
             fullName: this.fullName,
             bio: this.bio,
@@ -33,6 +36,9 @@ let User = class User {
             username: this.username,
             email: this.email,
             phoneNumber: this.phoneNumber,
+            userType: this.userType,
+            renNumber: this.renNumber,
+            renStatus: this.renStatus,
             profileImage: this.profileImage,
             fullName: this.fullName,
             bio: this.bio,
@@ -62,6 +68,18 @@ __decorate([
     Column({ type: 'varchar', length: 20, nullable: true, name: 'phone_number' }),
     __metadata("design:type", Object)
 ], User.prototype, "phoneNumber", void 0);
+__decorate([
+    Column({ type: 'varchar', length: 30, nullable: true, name: 'user_type' }),
+    __metadata("design:type", Object)
+], User.prototype, "userType", void 0);
+__decorate([
+    Column({ type: 'varchar', length: 50, nullable: true, name: 'ren_number' }),
+    __metadata("design:type", Object)
+], User.prototype, "renNumber", void 0);
+__decorate([
+    Column({ type: 'varchar', length: 30, nullable: true, name: 'ren_status' }),
+    __metadata("design:type", Object)
+], User.prototype, "renStatus", void 0);
 __decorate([
     Column({ type: 'varchar', length: 500, nullable: true, name: 'profile_image' }),
     __metadata("design:type", Object)

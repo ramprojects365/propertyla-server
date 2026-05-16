@@ -34,6 +34,9 @@ export const createUser = async (userData: UserRepositoryData): Promise<User> =>
     username: userData.username,
     email: userData.email,
     phoneNumber: userData.phoneNumber || null,
+    userType: userData.userType || null,
+    renNumber: userData.renNumber || null,
+    renStatus: userData.renStatus || null,
     passwordHash: userData.passwordHash,
     verificationToken: userData.verificationToken,
     verificationExpiry: userData.verificationExpiry,
@@ -51,7 +54,7 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
 
   return await repository.findOne({
     where: { email },
-    select: ['id', 'email', 'passwordHash', 'emailVerified', 'username', 'phoneNumber', 'createdAt', 'updatedAt']
+    select: ['id', 'email', 'passwordHash', 'emailVerified', 'username', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'createdAt', 'updatedAt']
   });
 };
 
@@ -60,7 +63,7 @@ export const findUserById = async (id: string): Promise<User | null> => {
 
   return await repository.findOne({
     where: { id },
-    select: ['id', 'username', 'email', 'phoneNumber', 'profileImage', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
+    select: ['id', 'username', 'email', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'profileImage', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
   });
 };
 
@@ -172,6 +175,9 @@ export const updateUser = async (
   updates: {
     username?: string;
     phoneNumber?: string | null;
+    userType?: string | null;
+    renNumber?: string | null;
+    renStatus?: string | null;
     fullName?: string | null;
     bio?: string | null;
     companyName?: string | null;
@@ -186,7 +192,7 @@ export const updateUser = async (
 
   const updatedUser = await repository.findOne({
     where: { id: userId },
-    select: ['id', 'username', 'email', 'phoneNumber', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
+    select: ['id', 'username', 'email', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
   });
 
   if (!updatedUser) {
@@ -216,7 +222,7 @@ export const updateProfileImage = async (userId: string, imageUrl: string): Prom
 
   const updatedUser = await repository.findOne({
     where: { id: userId },
-    select: ['id', 'username', 'email', 'phoneNumber', 'profileImage', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
+    select: ['id', 'username', 'email', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'profileImage', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
   });
 
   if (!updatedUser) {

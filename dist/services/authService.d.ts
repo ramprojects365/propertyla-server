@@ -3,6 +3,9 @@ export declare const registerUser: (registrationData: RegistrationData) => Promi
     userId: string;
     username: string;
     email: string;
+    userType: string | null;
+    renNumber: string | null;
+    renStatus: string | null;
     emailVerified: boolean;
 }>;
 export declare const loginUser: (credentials: LoginCredentials) => Promise<AuthToken>;

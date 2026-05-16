@@ -15,7 +15,7 @@ export declare class Property {
     description: string;
     listingType: 'rent' | 'sale';
     propertyType: string;
-    tenure: 'freehold' | 'leasehold';
+    tenure?: string;
     propertyName?: string;
     streetName?: string;
     cityName?: string;
@@ -28,12 +28,24 @@ export declare class Property {
     longitude?: number;
     price: number;
     buildupArea?: number;
+    landSize?: number;
     furnishing?: 'Fully' | 'Partially' | 'Unfurnished';
     bedrooms?: number;
     bathrooms?: number;
     availability?: 'Immediate' | 'Next month' | 'Under Construction';
     floorLevel?: string;
     yearOfBuild?: number;
+    yearOfCompletion?: number;
+    carParkAllocation?: string;
+    facingDirection?: string;
+    renovationStatus?: string;
+    depositAmount?: number;
+    minimumRentalPeriod?: string;
+    petPolicy?: string;
+    preferredTenantType?: string;
+    maintenanceFee?: number;
+    sinkingFund?: number;
+    bumiLotStatus?: string;
     negotiable: boolean;
     amenities: {
         lifestyle: string[];
