@@ -27,9 +27,10 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     }
 
     // Map frontend field names → DB field names
-    const { fullName, aboutYou, companyName, icPassport, designation, experience, username: usernameField, user_name, phoneNumber, phone_number } = req.body;
+    const { fullName, aboutYou, companyName, icPassport, designation, experience, renNumber, ren_number, username: usernameField, user_name, phoneNumber, phone_number } = req.body;
     const username = usernameField ?? user_name;
     const phone = phoneNumber ?? phone_number;
+    const ren = renNumber ?? ren_number;
 
     const updates: Record<string, any> = {};
     if (fullName !== undefined)    updates.fullName = fullName || null;
@@ -38,6 +39,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     if (icPassport !== undefined)  updates.icPassport = icPassport || null;
     if (designation !== undefined) updates.designation = designation || null;
     if (experience !== undefined)  updates.experienceYears = experience ? Number(experience) : null;
+    if (ren !== undefined)         updates.renNumber = ren || null;
     if (username !== undefined)    updates.username = username;
     if (phone !== undefined)       updates.phoneNumber = phone || null;
 

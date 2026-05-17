@@ -24,9 +24,10 @@ export const updateProfile = async (req, res) => {
             return;
         }
         // Map frontend field names → DB field names
-        const { fullName, aboutYou, companyName, icPassport, designation, experience, username: usernameField, user_name, phoneNumber, phone_number } = req.body;
+        const { fullName, aboutYou, companyName, icPassport, designation, experience, renNumber, ren_number, username: usernameField, user_name, phoneNumber, phone_number } = req.body;
         const username = usernameField ?? user_name;
         const phone = phoneNumber ?? phone_number;
+        const ren = renNumber ?? ren_number;
         const updates = {};
         if (fullName !== undefined)
             updates.fullName = fullName || null;
@@ -40,6 +41,8 @@ export const updateProfile = async (req, res) => {
             updates.designation = designation || null;
         if (experience !== undefined)
             updates.experienceYears = experience ? Number(experience) : null;
+        if (ren !== undefined)
+            updates.renNumber = ren || null;
         if (username !== undefined)
             updates.username = username;
         if (phone !== undefined)
