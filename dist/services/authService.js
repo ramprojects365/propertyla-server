@@ -7,6 +7,9 @@ import { sendOtpEmail } from './emailService.js';
 const BCRYPT_SALT_ROUNDS = 10;
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
+const REN_NUMBER_PATTERN = /^(REN|PEA)\d{4,6}$/;
+const VERIFIED_REN_STATUS = 'verified';
+const NOT_VERIFIED_REN_STATUS = 'not_verified';
 if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET environment variable is required');
 }
@@ -28,18 +31,37 @@ const generateUsernameFromEmail = (email) => {
         .slice(0, 21) || 'user';
     return `${base}_${crypto.randomBytes(4).toString('hex')}`;
 };
+const normalizeRenNumber = (renNumber) => {
+    const normalized = renNumber?.trim().toUpperCase() || null;
+    if (normalized && !REN_NUMBER_PATTERN.test(normalized)) {
+        throw {
+            status: 400,
+            message: 'REN/PEA number must start with REN or PEA followed by 4-6 digits'
+        };
+    }
+    return normalized;
+};
+const normalizeRenStatus = (renStatus) => {
+    const normalized = renStatus?.trim().toLowerCase().replace(/\s+/g, '_');
+    return normalized === VERIFIED_REN_STATUS ? VERIFIED_REN_STATUS : NOT_VERIFIED_REN_STATUS;
+};
+const withRenVerification = (user) => {
+    const renStatus = normalizeRenStatus(user.renStatus);
+    const renVerified = renStatus === VERIFIED_REN_STATUS;
+    return {
+        ...user,
+        renStatus,
+        renVerified,
+        renStatusLabel: renVerified ? 'Verified' : 'Not verified',
+        renStatusIcon: renVerified ? 'badge-check' : 'badge-alert'
+    };
+};
 export const registerUser = async (registrationData) => {
     const { email, password } = registrationData;
     const username = registrationData.username?.trim() || generateUsernameFromEmail(email);
     const userType = registrationData.userType?.trim() || null;
-    const renNumber = registrationData.renNumber?.trim() || null;
-    const requestedRenStatus = registrationData.renStatus?.trim();
-    const normalizedUserType = userType?.toLowerCase();
-    const renStatus = requestedRenStatus || (normalizedUserType === 'agent'
-        ? (renNumber ? 'pending' : 'missing')
-        : normalizedUserType
-            ? 'not_applicable'
-            : null);
+    const renNumber = normalizeRenNumber(registrationData.renNumber);
+    const renStatus = NOT_VERIFIED_REN_STATUS;
     const existingUser = await userRepository.findUserByEmail(email);
     if (existingUser) {
         throw {
@@ -69,7 +91,7 @@ export const registerUser = async (registrationData) => {
     catch (err) {
         console.error('Failed to send OTP email:', err);
     }
-    return {
+    return withRenVerification({
         userId: newUser.id,
         username: newUser.username,
         email: newUser.email,
@@ -77,7 +99,7 @@ export const registerUser = async (registrationData) => {
         renNumber: newUser.renNumber,
         renStatus: newUser.renStatus,
         emailVerified: newUser.emailVerified
-    };
+    });
 };
 export const loginUser = async (credentials) => {
     const { email, password } = credentials;
@@ -105,7 +127,7 @@ export const loginUser = async (credentials) => {
     const token = generateJWTToken(user.id, user.email);
     return {
         token,
-        user: {
+        user: withRenVerification({
             id: user.id,
             username: user.username,
             email: user.email,
@@ -113,10 +135,17 @@ export const loginUser = async (credentials) => {
             userType: user.userType,
             renNumber: user.renNumber,
             renStatus: user.renStatus,
+            profileImage: user.profileImage,
+            fullName: user.fullName,
+            bio: user.bio,
+            companyName: user.companyName,
+            icPassport: user.icPassport,
+            designation: user.designation,
+            experienceYears: user.experienceYears,
             emailVerified: user.emailVerified,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
-        }
+        })
     };
 };
 export const verifyUserEmailToken = async (token) => {
@@ -150,7 +179,7 @@ export const getUserProfile = async (userId) => {
     if (!user) {
         throw { status: 404, message: 'User not found' };
     }
-    return {
+    return withRenVerification({
         id: user.id,
         username: user.username,
         email: user.email,
@@ -168,9 +197,19 @@ export const getUserProfile = async (userId) => {
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
-    };
+    });
 };
 export const updateUserProfile = async (userId, updates) => {
+    const renNumberChanged = updates.renNumber !== undefined;
+    if (updates.renNumber !== undefined) {
+        updates.renNumber = normalizeRenNumber(updates.renNumber);
+    }
+    if (updates.renStatus !== undefined) {
+        delete updates.renStatus;
+    }
+    if (renNumberChanged) {
+        updates.renStatus = NOT_VERIFIED_REN_STATUS;
+    }
     if (updates.username) {
         const existing = await userRepository.findUserByUsername(updates.username);
         if (existing && existing.id !== userId) {
@@ -178,28 +217,7 @@ export const updateUserProfile = async (userId, updates) => {
         }
     }
     const updated = await userRepository.updateUser(userId, updates);
-    return {
-        id: updated.id,
-        username: updated.username,
-        email: updated.email,
-        phoneNumber: updated.phoneNumber,
-        userType: updated.userType,
-        renNumber: updated.renNumber,
-        renStatus: updated.renStatus,
-        fullName: updated.fullName,
-        bio: updated.bio,
-        companyName: updated.companyName,
-        icPassport: updated.icPassport,
-        designation: updated.designation,
-        experienceYears: updated.experienceYears,
-        emailVerified: updated.emailVerified,
-        createdAt: updated.createdAt,
-        updatedAt: updated.updatedAt
-    };
-};
-export const uploadProfileImage = async (userId, imageUrl) => {
-    const updated = await userRepository.updateProfileImage(userId, imageUrl);
-    return {
+    return withRenVerification({
         id: updated.id,
         username: updated.username,
         email: updated.email,
@@ -217,7 +235,29 @@ export const uploadProfileImage = async (userId, imageUrl) => {
         emailVerified: updated.emailVerified,
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt
-    };
+    });
+};
+export const uploadProfileImage = async (userId, imageUrl) => {
+    const updated = await userRepository.updateProfileImage(userId, imageUrl);
+    return withRenVerification({
+        id: updated.id,
+        username: updated.username,
+        email: updated.email,
+        phoneNumber: updated.phoneNumber,
+        userType: updated.userType,
+        renNumber: updated.renNumber,
+        renStatus: updated.renStatus,
+        profileImage: updated.profileImage,
+        fullName: updated.fullName,
+        bio: updated.bio,
+        companyName: updated.companyName,
+        icPassport: updated.icPassport,
+        designation: updated.designation,
+        experienceYears: updated.experienceYears,
+        emailVerified: updated.emailVerified,
+        createdAt: updated.createdAt,
+        updatedAt: updated.updatedAt
+    });
 };
 export const changePassword = async (userId, oldPassword, newPassword) => {
     const user = await userRepository.findUserByIdWithPassword(userId);
@@ -239,7 +279,7 @@ export const validateToken = async (userId) => {
             message: 'Invalid token or user not found'
         };
     }
-    return user;
+    return withRenVerification(user);
 };
 export const verifyOTP = async (userId, code) => {
     const user = await userRepository.findUserById(userId);
@@ -283,7 +323,7 @@ export const verifyOtpByEmail = async (email, code) => {
     const token = generateJWTToken(updatedUser.id, updatedUser.email);
     return {
         token,
-        user: {
+        user: withRenVerification({
             id: updatedUser.id,
             username: updatedUser.username,
             email: updatedUser.email,
@@ -294,7 +334,7 @@ export const verifyOtpByEmail = async (email, code) => {
             emailVerified: updatedUser.emailVerified,
             createdAt: updatedUser.createdAt,
             updatedAt: updatedUser.updatedAt
-        }
+        })
     };
 };
 //# sourceMappingURL=authService.js.map

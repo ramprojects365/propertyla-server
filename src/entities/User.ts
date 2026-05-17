@@ -69,6 +69,9 @@ export class User {
   updatedAt: Date;
 
   toJSON() {
+    const renStatus = this.renStatus === 'verified' ? 'verified' : 'not_verified';
+    const renVerified = renStatus === 'verified';
+
     return {
       id: this.id,
       username: this.username,
@@ -76,7 +79,10 @@ export class User {
       phoneNumber: this.phoneNumber,
       userType: this.userType,
       renNumber: this.renNumber,
-      renStatus: this.renStatus,
+      renStatus,
+      renVerified,
+      renStatusLabel: renVerified ? 'Verified' : 'Not verified',
+      renStatusIcon: renVerified ? 'badge-check' : 'badge-alert',
       profileImage: this.profileImage,
       fullName: this.fullName,
       bio: this.bio,
@@ -91,6 +97,9 @@ export class User {
   }
 
   toProfileJSON() {
+    const renStatus = this.renStatus === 'verified' ? 'verified' : 'not_verified';
+    const renVerified = renStatus === 'verified';
+
     return {
       id: this.id,
       username: this.username,
@@ -98,7 +107,10 @@ export class User {
       phoneNumber: this.phoneNumber,
       userType: this.userType,
       renNumber: this.renNumber,
-      renStatus: this.renStatus,
+      renStatus,
+      renVerified,
+      renStatusLabel: renVerified ? 'Verified' : 'Not verified',
+      renStatusIcon: renVerified ? 'badge-check' : 'badge-alert',
       profileImage: this.profileImage,
       fullName: this.fullName,
       bio: this.bio,

@@ -41,7 +41,7 @@ export const findUserByEmail = async (email) => {
     const repository = getUserRepository();
     return await repository.findOne({
         where: { email },
-        select: ['id', 'email', 'passwordHash', 'emailVerified', 'username', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'createdAt', 'updatedAt']
+        select: ['id', 'email', 'passwordHash', 'emailVerified', 'username', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'profileImage', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'createdAt', 'updatedAt']
     });
 };
 export const findUserById = async (id) => {
@@ -125,7 +125,7 @@ export const updateUser = async (userId, updates) => {
     await repository.update({ id: userId }, updates);
     const updatedUser = await repository.findOne({
         where: { id: userId },
-        select: ['id', 'username', 'email', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
+        select: ['id', 'username', 'email', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'profileImage', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
     });
     if (!updatedUser) {
         throw new Error('User not found after update');

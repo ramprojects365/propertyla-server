@@ -31,6 +31,9 @@ export interface UserProfile {
   userType?: string | null;
   renNumber?: string | null;
   renStatus?: string | null;
+  renVerified?: boolean;
+  renStatusLabel?: string;
+  renStatusIcon?: string;
   profileImage?: string | null;
   fullName?: string | null;
   bio?: string | null;

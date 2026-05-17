@@ -9,6 +9,9 @@ import { sendOtpEmail } from './emailService.js';
 const BCRYPT_SALT_ROUNDS = 10;
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
+const REN_NUMBER_PATTERN = /^(REN|PEA)\d{4,6}$/;
+const VERIFIED_REN_STATUS = 'verified';
+const NOT_VERIFIED_REN_STATUS = 'not_verified';
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
@@ -47,20 +50,43 @@ const generateUsernameFromEmail = (email: string): string => {
   return `${base}_${crypto.randomBytes(4).toString('hex')}`;
 };
 
+const normalizeRenNumber = (renNumber?: string | null): string | null => {
+  const normalized = renNumber?.trim().toUpperCase() || null;
+
+  if (normalized && !REN_NUMBER_PATTERN.test(normalized)) {
+    throw {
+      status: 400,
+      message: 'REN/PEA number must start with REN or PEA followed by 4-6 digits'
+    } as ServiceError;
+  }
+
+  return normalized;
+};
+
+const normalizeRenStatus = (renStatus?: string | null): string => {
+  const normalized = renStatus?.trim().toLowerCase().replace(/\s+/g, '_');
+  return normalized === VERIFIED_REN_STATUS ? VERIFIED_REN_STATUS : NOT_VERIFIED_REN_STATUS;
+};
+
+const withRenVerification = <T extends { renStatus?: string | null }>(user: T) => {
+  const renStatus = normalizeRenStatus(user.renStatus);
+  const renVerified = renStatus === VERIFIED_REN_STATUS;
+
+  return {
+    ...user,
+    renStatus,
+    renVerified,
+    renStatusLabel: renVerified ? 'Verified' : 'Not verified',
+    renStatusIcon: renVerified ? 'badge-check' : 'badge-alert'
+  };
+};
+
 export const registerUser = async (registrationData: RegistrationData) => {
   const { email, password } = registrationData;
   const username = registrationData.username?.trim() || generateUsernameFromEmail(email);
   const userType = registrationData.userType?.trim() || null;
-  const renNumber = registrationData.renNumber?.trim() || null;
-  const requestedRenStatus = registrationData.renStatus?.trim();
-  const normalizedUserType = userType?.toLowerCase();
-  const renStatus = requestedRenStatus || (
-    normalizedUserType === 'agent'
-      ? (renNumber ? 'pending' : 'missing')
-      : normalizedUserType
-        ? 'not_applicable'
-        : null
-  );
+  const renNumber = normalizeRenNumber(registrationData.renNumber);
+  const renStatus = NOT_VERIFIED_REN_STATUS;
 
   const existingUser = await userRepository.findUserByEmail(email);
 
@@ -96,7 +122,7 @@ export const registerUser = async (registrationData: RegistrationData) => {
     console.error('Failed to send OTP email:', err);
   }
 
-  return {
+  return withRenVerification({
     userId: newUser.id,
     username: newUser.username,
     email: newUser.email,
@@ -104,7 +130,7 @@ export const registerUser = async (registrationData: RegistrationData) => {
     renNumber: newUser.renNumber,
     renStatus: newUser.renStatus,
     emailVerified: newUser.emailVerified
-  };
+  });
 };
 
 export const loginUser = async (credentials: LoginCredentials): Promise<AuthToken> => {
@@ -141,7 +167,7 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthToke
 
   return {
     token,
-    user: {
+    user: withRenVerification({
       id: user.id,
       username: user.username,
       email: user.email,
@@ -149,10 +175,17 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthToke
       userType: user.userType,
       renNumber: user.renNumber,
       renStatus: user.renStatus,
+      profileImage: user.profileImage,
+      fullName: user.fullName,
+      bio: user.bio,
+      companyName: user.companyName,
+      icPassport: user.icPassport,
+      designation: user.designation,
+      experienceYears: user.experienceYears,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
-    }
+    })
   };
 };
 
@@ -196,7 +229,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile> => {
     throw { status: 404, message: 'User not found' } as ServiceError;
   }
 
-  return {
+  return withRenVerification({
     id: user.id,
     username: user.username,
     email: user.email,
@@ -214,13 +247,27 @@ export const getUserProfile = async (userId: string): Promise<UserProfile> => {
     emailVerified: user.emailVerified,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
-  };
+  });
 };
 
 export const updateUserProfile = async (
   userId: string,
   updates: UpdateProfileData
 ): Promise<UserProfile> => {
+  const renNumberChanged = updates.renNumber !== undefined;
+
+  if (updates.renNumber !== undefined) {
+    updates.renNumber = normalizeRenNumber(updates.renNumber);
+  }
+
+  if (updates.renStatus !== undefined) {
+    delete updates.renStatus;
+  }
+
+  if (renNumberChanged) {
+    updates.renStatus = NOT_VERIFIED_REN_STATUS;
+  }
+
   if (updates.username) {
     const existing = await userRepository.findUserByUsername(updates.username);
     if (existing && existing.id !== userId) {
@@ -230,30 +277,7 @@ export const updateUserProfile = async (
 
   const updated = await userRepository.updateUser(userId, updates);
 
-  return {
-    id: updated.id,
-    username: updated.username,
-    email: updated.email,
-    phoneNumber: updated.phoneNumber,
-    userType: updated.userType,
-    renNumber: updated.renNumber,
-    renStatus: updated.renStatus,
-    fullName: updated.fullName,
-    bio: updated.bio,
-    companyName: updated.companyName,
-    icPassport: updated.icPassport,
-    designation: updated.designation,
-    experienceYears: updated.experienceYears,
-    emailVerified: updated.emailVerified,
-    createdAt: updated.createdAt,
-    updatedAt: updated.updatedAt
-  };
-};
-
-export const uploadProfileImage = async (userId: string, imageUrl: string): Promise<UserProfile> => {
-  const updated = await userRepository.updateProfileImage(userId, imageUrl);
-
-  return {
+  return withRenVerification({
     id: updated.id,
     username: updated.username,
     email: updated.email,
@@ -271,7 +295,31 @@ export const uploadProfileImage = async (userId: string, imageUrl: string): Prom
     emailVerified: updated.emailVerified,
     createdAt: updated.createdAt,
     updatedAt: updated.updatedAt
-  };
+  });
+};
+
+export const uploadProfileImage = async (userId: string, imageUrl: string): Promise<UserProfile> => {
+  const updated = await userRepository.updateProfileImage(userId, imageUrl);
+
+  return withRenVerification({
+    id: updated.id,
+    username: updated.username,
+    email: updated.email,
+    phoneNumber: updated.phoneNumber,
+    userType: updated.userType,
+    renNumber: updated.renNumber,
+    renStatus: updated.renStatus,
+    profileImage: updated.profileImage,
+    fullName: updated.fullName,
+    bio: updated.bio,
+    companyName: updated.companyName,
+    icPassport: updated.icPassport,
+    designation: updated.designation,
+    experienceYears: updated.experienceYears,
+    emailVerified: updated.emailVerified,
+    createdAt: updated.createdAt,
+    updatedAt: updated.updatedAt
+  });
 };
 
 export const changePassword = async (
@@ -303,7 +351,7 @@ export const validateToken = async (userId: string): Promise<UserProfile> => {
     } as ServiceError;
   }
 
-  return user;
+  return withRenVerification(user);
 };
 
 export const verifyOTP = async (userId: string, code: string) => {
@@ -363,7 +411,7 @@ export const verifyOtpByEmail = async (
 
   return {
     token,
-    user: {
+    user: withRenVerification({
       id: updatedUser.id,
       username: updatedUser.username,
       email: updatedUser.email,
@@ -374,6 +422,6 @@ export const verifyOtpByEmail = async (
       emailVerified: updatedUser.emailVerified,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt
-    }
+    })
   };
 };

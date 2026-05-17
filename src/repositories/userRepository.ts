@@ -54,7 +54,7 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
 
   return await repository.findOne({
     where: { email },
-    select: ['id', 'email', 'passwordHash', 'emailVerified', 'username', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'createdAt', 'updatedAt']
+    select: ['id', 'email', 'passwordHash', 'emailVerified', 'username', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'profileImage', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'createdAt', 'updatedAt']
   });
 };
 
@@ -192,7 +192,7 @@ export const updateUser = async (
 
   const updatedUser = await repository.findOne({
     where: { id: userId },
-    select: ['id', 'username', 'email', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
+    select: ['id', 'username', 'email', 'phoneNumber', 'userType', 'renNumber', 'renStatus', 'profileImage', 'fullName', 'bio', 'companyName', 'icPassport', 'designation', 'experienceYears', 'emailVerified', 'createdAt', 'updatedAt']
   });
 
   if (!updatedUser) {

@@ -7,6 +7,11 @@ export declare const registerUser: (registrationData: RegistrationData) => Promi
     renNumber: string | null;
     renStatus: string | null;
     emailVerified: boolean;
+} & {
+    renStatus: string;
+    renVerified: boolean;
+    renStatusLabel: string;
+    renStatusIcon: string;
 }>;
 export declare const loginUser: (credentials: LoginCredentials) => Promise<AuthToken>;
 export declare const verifyUserEmailToken: (token: string) => Promise<{

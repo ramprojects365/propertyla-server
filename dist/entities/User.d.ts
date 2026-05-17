@@ -28,7 +28,10 @@ export declare class User {
         phoneNumber: string | null;
         userType: string | null;
         renNumber: string | null;
-        renStatus: string | null;
+        renStatus: string;
+        renVerified: boolean;
+        renStatusLabel: string;
+        renStatusIcon: string;
         profileImage: string | null;
         fullName: string | null;
         bio: string | null;
@@ -47,7 +50,10 @@ export declare class User {
         phoneNumber: string | null;
         userType: string | null;
         renNumber: string | null;
-        renStatus: string | null;
+        renStatus: string;
+        renVerified: boolean;
+        renStatusLabel: string;
+        renStatusIcon: string;
         profileImage: string | null;
         fullName: string | null;
         bio: string | null;
