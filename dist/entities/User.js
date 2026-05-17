@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 let User = class User {
     toJSON() {
-        const renStatus = this.renStatus === 'verified' ? 'verified' : 'not_verified';
+        const renStatus = this.renStatus?.trim().toLowerCase().replace(/\s+/g, '_') === 'verified' ? 'verified' : 'not_verified';
         const renVerified = renStatus === 'verified';
         return {
             id: this.id,
@@ -36,7 +36,7 @@ let User = class User {
         };
     }
     toProfileJSON() {
-        const renStatus = this.renStatus === 'verified' ? 'verified' : 'not_verified';
+        const renStatus = this.renStatus?.trim().toLowerCase().replace(/\s+/g, '_') === 'verified' ? 'verified' : 'not_verified';
         const renVerified = renStatus === 'verified';
         return {
             id: this.id,

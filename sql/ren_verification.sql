@@ -6,8 +6,10 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS ren_status VARCHAR(30) DEFAULT 'not_verified';
 
 UPDATE users
-SET ren_status = 'not_verified'
-WHERE ren_status IS NULL OR ren_status <> 'verified';
+SET ren_status = CASE
+  WHEN LOWER(TRIM(ren_status)) = 'verified' THEN 'verified'
+  ELSE 'not_verified'
+END;
 
 -- Manual admin action for now:
 -- UPDATE users SET ren_status = 'verified' WHERE id = '<USER_ID>';

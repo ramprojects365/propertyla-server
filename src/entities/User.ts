@@ -69,7 +69,7 @@ export class User {
   updatedAt: Date;
 
   toJSON() {
-    const renStatus = this.renStatus === 'verified' ? 'verified' : 'not_verified';
+    const renStatus = this.renStatus?.trim().toLowerCase().replace(/\s+/g, '_') === 'verified' ? 'verified' : 'not_verified';
     const renVerified = renStatus === 'verified';
 
     return {
@@ -97,7 +97,7 @@ export class User {
   }
 
   toProfileJSON() {
-    const renStatus = this.renStatus === 'verified' ? 'verified' : 'not_verified';
+    const renStatus = this.renStatus?.trim().toLowerCase().replace(/\s+/g, '_') === 'verified' ? 'verified' : 'not_verified';
     const renVerified = renStatus === 'verified';
 
     return {
