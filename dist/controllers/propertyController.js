@@ -545,6 +545,48 @@ export const notifyPropertyFitView = async (req, res) => {
         }
     }
 };
+export const recordPropertyView = async (req, res) => {
+    try {
+        const propertyId = req.params.id;
+        if (!propertyId) {
+            res.status(400).json({
+                success: false,
+                message: 'Property ID is required'
+            });
+            return;
+        }
+        if (!isValidUuid(propertyId)) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid property ID'
+            });
+            return;
+        }
+        const result = await propertyFitService.notifyPropertyViewed({
+            propertyId,
+            contact: req.body?.contact,
+            propertyUrl: req.body?.propertyUrl
+        }, { sendEmail: false });
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+    }
+    catch (error) {
+        if (error instanceof AppError) {
+            res.status(error.status).json({
+                success: false,
+                message: error.message
+            });
+        }
+        else {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to record property view'
+            });
+        }
+    }
+};
 export const createOrLoginPropertyFitLead = async (req, res) => {
     try {
         const result = await propertyFitService.createOrLoginPropertyFitLead(req.body.contact);

@@ -9,6 +9,7 @@ import propertyRoutes from './routes/propertyRoutes.js';
 import imageUploadRoutes from './routes/imageUploadRoutes.js';
 import uploadsRoutes from './routes/uploadsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import { initializeDatabase } from './config/database.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -57,7 +58,14 @@ app.get('/', (req, res) => {
                 search: 'GET /api/properties/search?q=searchTerm',
                 fitMatches: 'POST /api/properties/fit/matches',
                 fitLead: 'POST /api/properties/fit/lead',
-                fitView: 'POST /api/properties/fit/view'
+                fitView: 'POST /api/properties/fit/view',
+                recordView: 'POST /api/properties/:id/view'
+            },
+            notifications: {
+                list: 'GET /api/notifications (requires auth)',
+                unreadCount: 'GET /api/notifications/unread-count (requires auth)',
+                markRead: 'PATCH /api/notifications/:id/read (requires auth)',
+                markAllRead: 'PATCH /api/notifications/read-all (requires auth)'
             },
             images: {
                 uploadMultiple: 'POST /api/images/upload-multiple (requires auth, max 15 images)',
@@ -74,6 +82,7 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/images', imageUploadRoutes);
 app.use('/api/uploads', uploadsRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use((req, res) => {
     console.log('Route not found:', req.method, req.originalUrl);
     res.status(404).json({

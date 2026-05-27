@@ -38,14 +38,21 @@ export declare const getPropertyFitMatches: (request: PropertyFitRequest) => Pro
         };
     } | null;
     leadUserId: string | undefined;
+    agentNotificationCount: number;
     count: number;
     data: Property[];
 }>;
-export declare const notifyPropertyViewed: (request: PropertyViewRequest) => Promise<{
+export declare const notifyPropertyViewed: (request: PropertyViewRequest, options?: {
+    sendEmail?: boolean;
+}) => Promise<{
     notified: boolean;
+    notificationId: string | undefined;
+    emailSent: boolean;
     message: string;
 } | {
     notified: boolean;
+    notificationId: string | undefined;
+    emailSent: boolean;
     message?: undefined;
 }>;
 export declare const createOrLoginPropertyFitLead: (contact?: AdvisorContact) => Promise<{

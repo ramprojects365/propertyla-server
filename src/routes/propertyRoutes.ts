@@ -15,6 +15,7 @@ router.get('/', propertyController.getAllProperties);
 router.get('/my-properties', authenticateToken, propertyController.getUserProperties);
 
 router.get('/:id', propertyController.getPropertyById);
+router.post('/:id/view', propertyController.recordPropertyView);
 
 router.post('/', authenticateToken, propertyController.createProperty);
 

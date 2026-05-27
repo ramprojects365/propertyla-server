@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { User } from '../entities/User.js';
 import { Property } from '../entities/Property.js';
+import { Notification } from '../entities/Notification.js';
 
 dotenv.config();
 
@@ -30,7 +31,7 @@ export const AppDataSource = new DataSource({
   ...connectionOptions,
   synchronize: true,
   logging: process.env.NODE_ENV === 'development',
-  entities: [User, Property],
+  entities: [User, Property, Notification],
 });
 
 export const initializeDatabase = async (): Promise<DataSource> => {

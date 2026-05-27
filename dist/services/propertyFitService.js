@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import * as propertyRepository from '../repositories/propertyRepository.js';
 import * as userRepository from '../repositories/userRepository.js';
 import { sendPropertyFitListEmail, sendPropertyViewNotificationEmail } from './emailService.js';
+import * as notificationService from './notificationService.js';
 import { generateJWTToken } from './authService.js';
 import { AppError } from '../utils/errors.js';
 const DEFAULT_PASSWORD_LENGTH = 18;
@@ -169,6 +170,18 @@ export const getPropertyFitMatches = async (request) => {
             console.error('Failed to send property fit list email:', error);
         }
     }
+    const agentNotificationResults = await Promise.allSettled(limited.map((property) => notificationService.createPropertyFitMatchNotification({
+        property,
+        viewerName: getDisplayName(request.contact),
+        viewerEmail: clean(request.contact?.email),
+        viewerPhone: clean(request.contact?.phone),
+        propertyUrl: buildPropertyUrl(property.id),
+        intent: answers.intent,
+        location: answers.location,
+        budgetAmount: answers.budgetAmount,
+        bedrooms: answers.bedrooms
+    })));
+    const agentNotificationCount = agentNotificationResults.filter((result) => result.status === 'fulfilled' && Boolean(result.value)).length;
     return {
         autoRegistered: lead.created,
         autoLoggedIn: Boolean(lead.token),
@@ -187,11 +200,12 @@ export const getPropertyFitMatches = async (request) => {
             }
         } : null,
         leadUserId: lead.user?.id,
+        agentNotificationCount,
         count: limited.length,
         data: limited
     };
 };
-export const notifyPropertyViewed = async (request) => {
+export const notifyPropertyViewed = async (request, options = {}) => {
     const propertyId = clean(request.propertyId);
     if (!propertyId) {
         throw new AppError('Property ID is required', 400);
@@ -200,27 +214,46 @@ export const notifyPropertyViewed = async (request) => {
     if (!property) {
         throw new AppError('Property not found', 404);
     }
+    await createLeadAccountIfNeeded(request.contact);
+    const notification = await notificationService.createPropertyViewNotification({
+        propertyId: property.id,
+        viewerName: getDisplayName(request.contact),
+        viewerEmail: clean(request.contact?.email),
+        viewerPhone: clean(request.contact?.phone),
+        propertyUrl: request.propertyUrl || buildPropertyUrl(property.id)
+    });
     const agentEmail = property.user?.email;
     if (!agentEmail) {
-        return { notified: false, message: 'Property has no agent email' };
+        return {
+            notified: Boolean(notification),
+            notificationId: notification?.id,
+            emailSent: false,
+            message: 'Property owner notification saved, but no email was available'
+        };
     }
-    await createLeadAccountIfNeeded(request.contact);
-    try {
-        await sendPropertyViewNotificationEmail({
-            to: agentEmail,
-            agentName: property.user?.fullName || property.user?.username,
-            leadName: getDisplayName(request.contact),
-            leadEmail: clean(request.contact?.email),
-            leadPhone: clean(request.contact?.phone),
-            propertyTitle: property.propertyName || property.title,
-            propertyUrl: request.propertyUrl || buildPropertyUrl(property.id)
-        });
+    const shouldSendEmail = options.sendEmail ?? true;
+    if (shouldSendEmail) {
+        try {
+            await sendPropertyViewNotificationEmail({
+                to: agentEmail,
+                agentName: property.user?.fullName || property.user?.username,
+                leadName: getDisplayName(request.contact),
+                leadEmail: clean(request.contact?.email),
+                leadPhone: clean(request.contact?.phone),
+                propertyTitle: property.propertyName || property.title,
+                propertyUrl: request.propertyUrl || buildPropertyUrl(property.id)
+            });
+        }
+        catch (error) {
+            console.error('Failed to send property view notification:', error);
+            throw new AppError('Failed to notify agent', 500);
+        }
     }
-    catch (error) {
-        console.error('Failed to send property view notification:', error);
-        throw new AppError('Failed to notify agent', 500);
-    }
-    return { notified: true };
+    return {
+        notified: Boolean(notification),
+        notificationId: notification?.id,
+        emailSent: shouldSendEmail
+    };
 };
 export const createOrLoginPropertyFitLead = async (contact) => {
     const lead = await createLeadAccountIfNeeded(contact);
