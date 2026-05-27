@@ -28,7 +28,7 @@ const generateVerificationToken = (): string => {
   return crypto.randomBytes(32).toString('hex');
 };
 
-const generateJWTToken = (userId: string, email: string): string => {
+export const generateJWTToken = (userId: string, email: string): string => {
   return jwt.sign(
     { userId, email },
     JWT_SECRET,

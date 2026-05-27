@@ -1,4 +1,5 @@
 import * as propertyService from '../services/propertyService.js';
+import * as propertyFitService from '../services/propertyFitService.js';
 import { AppError } from '../utils/errors.js';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const isValidUuid = (value) => UUID_REGEX.test(value);
@@ -494,6 +495,75 @@ export const searchProperties = async (req, res) => {
             res.status(500).json({
                 success: false,
                 message: 'Failed to search properties'
+            });
+        }
+    }
+};
+export const getPropertyFitMatches = async (req, res) => {
+    try {
+        const result = await propertyFitService.getPropertyFitMatches(req.body);
+        res.status(200).json({
+            success: true,
+            ...result
+        });
+    }
+    catch (error) {
+        if (error instanceof AppError) {
+            res.status(error.status).json({
+                success: false,
+                message: error.message
+            });
+        }
+        else {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get property fit matches'
+            });
+        }
+    }
+};
+export const notifyPropertyFitView = async (req, res) => {
+    try {
+        const result = await propertyFitService.notifyPropertyViewed(req.body);
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+    }
+    catch (error) {
+        if (error instanceof AppError) {
+            res.status(error.status).json({
+                success: false,
+                message: error.message
+            });
+        }
+        else {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to notify property agent'
+            });
+        }
+    }
+};
+export const createOrLoginPropertyFitLead = async (req, res) => {
+    try {
+        const result = await propertyFitService.createOrLoginPropertyFitLead(req.body.contact);
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+    }
+    catch (error) {
+        if (error instanceof AppError) {
+            res.status(error.status).json({
+                success: false,
+                message: error.message
+            });
+        }
+        else {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to create property fit lead'
             });
         }
     }

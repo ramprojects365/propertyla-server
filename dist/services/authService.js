@@ -17,7 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const generateVerificationToken = () => {
     return crypto.randomBytes(32).toString('hex');
 };
-const generateJWTToken = (userId, email) => {
+export const generateJWTToken = (userId, email) => {
     return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 };
 const calculateVerificationExpiry = () => {

@@ -6,6 +6,10 @@ const router = Router();
 
 router.get('/search', propertyController.searchProperties);
 
+router.post('/fit/matches', propertyController.getPropertyFitMatches);
+router.post('/fit/lead', propertyController.createOrLoginPropertyFitLead);
+router.post('/fit/view', propertyController.notifyPropertyFitView);
+
 router.get('/', propertyController.getAllProperties);
 
 router.get('/my-properties', authenticateToken, propertyController.getUserProperties);

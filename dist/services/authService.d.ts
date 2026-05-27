@@ -1,4 +1,5 @@
 import { RegistrationData, LoginCredentials, AuthToken, UserProfile, UpdateProfileData } from '../types/user.js';
+export declare const generateJWTToken: (userId: string, email: string) => string;
 export declare const registerUser: (registrationData: RegistrationData) => Promise<{
     userId: string;
     username: string;

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as propertyService from '../services/propertyService.js';
+import * as propertyFitService from '../services/propertyFitService.js';
 import { Property, PropertyImage } from '../entities/Property.js';
 import { AppError } from '../utils/errors.js';
 
@@ -606,6 +607,75 @@ export const searchProperties = async (req: Request, res: Response): Promise<voi
       res.status(500).json({
         success: false,
         message: 'Failed to search properties'
+      });
+    }
+  }
+};
+
+export const getPropertyFitMatches = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await propertyFitService.getPropertyFitMatches(req.body);
+
+    res.status(200).json({
+      success: true,
+      ...result
+    });
+  } catch (error: unknown) {
+    if (error instanceof AppError) {
+      res.status(error.status).json({
+        success: false,
+        message: error.message
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get property fit matches'
+      });
+    }
+  }
+};
+
+export const notifyPropertyFitView = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await propertyFitService.notifyPropertyViewed(req.body);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error: unknown) {
+    if (error instanceof AppError) {
+      res.status(error.status).json({
+        success: false,
+        message: error.message
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to notify property agent'
+      });
+    }
+  }
+};
+
+export const createOrLoginPropertyFitLead = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await propertyFitService.createOrLoginPropertyFitLead(req.body.contact);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error: unknown) {
+    if (error instanceof AppError) {
+      res.status(error.status).json({
+        success: false,
+        message: error.message
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create property fit lead'
       });
     }
   }

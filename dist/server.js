@@ -54,7 +54,10 @@ app.get('/', (req, res) => {
                 create: 'POST /api/properties (requires auth)',
                 update: 'PUT /api/properties/:id (requires auth)',
                 delete: 'DELETE /api/properties/:id (requires auth)',
-                search: 'GET /api/properties/search?q=searchTerm'
+                search: 'GET /api/properties/search?q=searchTerm',
+                fitMatches: 'POST /api/properties/fit/matches',
+                fitLead: 'POST /api/properties/fit/lead',
+                fitView: 'POST /api/properties/fit/view'
             },
             images: {
                 uploadMultiple: 'POST /api/images/upload-multiple (requires auth, max 15 images)',
