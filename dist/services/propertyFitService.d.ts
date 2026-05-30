@@ -23,6 +23,8 @@ type PropertyViewRequest = {
 export declare const getPropertyFitMatches: (request: PropertyFitRequest) => Promise<{
     autoRegistered: boolean;
     autoLoggedIn: boolean;
+    existingEmailIgnored: boolean;
+    defaultPassword: string | undefined;
     fallbackUsed: boolean;
     exactMatchCount: number;
     auth: {
@@ -58,6 +60,8 @@ export declare const notifyPropertyViewed: (request: PropertyViewRequest, option
 export declare const createOrLoginPropertyFitLead: (contact?: AdvisorContact) => Promise<{
     autoRegistered: boolean;
     autoLoggedIn: boolean;
+    existingEmailIgnored: boolean;
+    defaultPassword: string | undefined;
     auth: {
         token: string;
         user: {
@@ -69,7 +73,7 @@ export declare const createOrLoginPropertyFitLead: (contact?: AdvisorContact) =>
             fullName: string;
             emailVerified: boolean;
         };
-    };
+    } | null;
 }>;
 export {};
 //# sourceMappingURL=propertyFitService.d.ts.map

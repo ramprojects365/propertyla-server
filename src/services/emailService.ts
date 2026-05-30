@@ -1,5 +1,20 @@
 import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const sendEmail = async (
+  payload: Parameters<typeof resend.emails.send>[0],
+  label: string
+): Promise<void> => {
+  const result = await resend.emails.send(payload);
+
+  if (result.error) {
+    console.error(`${label} email failed:`, result.error);
+    throw result.error;
+  }
+
+  console.log(`${label} email sent:`, result.data?.id || 'accepted');
+};
+
 const buildOtpEmailHtml = (username: string, otp: string): string => {
   return `<!DOCTYPE html>
 <html>
@@ -55,13 +70,13 @@ export const sendOtpEmail = async (
   const from =
     process.env.MAIL_FROM || "PropertyLA <support@propertyla.com.my>";
 
-  await resend.emails.send({
+  await sendEmail({
     from,
     to,
     subject: "Your PropertyLA verification code",
     html: buildOtpEmailHtml(username, otp),
     text: `Hi ${username}, your OTP is ${otp}`,
-  });
+  }, 'OTP');
 };
 
 type PropertyFitEmailItem = {
@@ -146,7 +161,7 @@ export const sendPropertyFitListEmail = async (
 
   const from = process.env.MAIL_FROM || 'PropertyLA <support@propertyla.com.my>';
 
-  await resend.emails.send({
+  await sendEmail({
     from,
     to,
     subject: 'Your PropertyLA property matches',
@@ -154,7 +169,126 @@ export const sendPropertyFitListEmail = async (
     text: `Hi ${name || 'there'}, your PropertyLA matches:\n\n${properties
       .map((property) => `- ${property.title} | ${formatPrice(property.price)} | ${property.location || 'Location pending'}${property.url ? ` | ${property.url}` : ''}`)
       .join('\n')}`,
-  });
+  }, 'Property fit list');
+};
+
+const getClientLoginUrl = (): string => {
+  const clientUrl =
+    process.env.PUBLIC_CLIENT_URL ||
+    process.env.CLIENT_URL ||
+    'https://www.propertyla.com.my';
+
+  return `${clientUrl.replace(/\/$/, '')}/sign-in`;
+};
+
+const buildLeadAccountHtml = (params: {
+  name: string;
+  email: string;
+  password: string;
+}): string => {
+  const loginUrl = getClientLoginUrl();
+
+  return `<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;color:#222;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:32px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+            <tr>
+              <td style="background:#003b5c;padding:24px 32px;color:#ffffff;">
+                <h1 style="margin:0;font-size:22px;">PropertyLA</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <h2 style="margin:0 0 14px;font-size:20px;color:#111;">Your property search is saved</h2>
+                <p style="margin:0 0 16px;line-height:1.5;">Hi ${params.name || 'there'},</p>
+                <p style="margin:0 0 18px;line-height:1.5;">We created a simple PropertyLA lead login so you can come back to your property search later.</p>
+                <div style="background:#eefafa;border:1px solid #cce8ea;border-radius:8px;padding:16px;margin:18px 0;">
+                  <p style="margin:0 0 8px;font-size:14px;color:#555;">Email</p>
+                  <strong style="display:block;margin-bottom:14px;color:#111;">${params.email}</strong>
+                  <p style="margin:0 0 8px;font-size:14px;color:#555;">Password</p>
+                  <strong style="display:block;color:#003b5c;font-size:18px;word-break:break-all;">${params.password}</strong>
+                </div>
+                <a href="${loginUrl}" style="display:inline-block;background:#003b5c;color:#ffffff;text-decoration:none;border-radius:6px;padding:11px 16px;font-size:14px;font-weight:700;">Sign in</a>
+                <p style="margin:18px 0 0;line-height:1.5;color:#555;font-size:14px;">If you did not request this, you can safely ignore this email.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+};
+
+export const sendPropertyFitLeadPasswordEmail = async (params: {
+  to: string;
+  name: string;
+  password: string;
+}): Promise<void> => {
+  const from = process.env.MAIL_FROM || 'PropertyLA <support@propertyla.com.my>';
+  const loginUrl = getClientLoginUrl();
+
+  await sendEmail({
+    from,
+    to: params.to,
+    subject: 'Your PropertyLA login details',
+    html: buildLeadAccountHtml({
+      name: params.name,
+      email: params.to,
+      password: params.password
+    }),
+    text: `Hi ${params.name || 'there'}, your PropertyLA search is saved. Login: ${loginUrl}\nEmail: ${params.to}\nPassword: ${params.password}`,
+  }, 'Property fit password');
+};
+
+const buildWelcomeBackHtml = (name: string): string => {
+  const loginUrl = getClientLoginUrl();
+
+  return `<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;color:#222;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:32px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+            <tr>
+              <td style="background:#003b5c;padding:24px 32px;color:#ffffff;">
+                <h1 style="margin:0;font-size:22px;">PropertyLA</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <h2 style="margin:0 0 14px;font-size:20px;color:#111;">Welcome back</h2>
+                <p style="margin:0 0 18px;line-height:1.5;">Hi ${name || 'there'}, this email is already connected to PropertyLA. You can sign in to continue your search.</p>
+                <a href="${loginUrl}" style="display:inline-block;background:#003b5c;color:#ffffff;text-decoration:none;border-radius:6px;padding:11px 16px;font-size:14px;font-weight:700;">Sign in</a>
+                <p style="margin:18px 0 0;line-height:1.5;color:#555;font-size:14px;">Our team may also follow up if your latest search needs agent help.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+};
+
+export const sendPropertyFitWelcomeBackEmail = async (params: {
+  to: string;
+  name: string;
+}): Promise<void> => {
+  const from = process.env.MAIL_FROM || 'PropertyLA <support@propertyla.com.my>';
+  const loginUrl = getClientLoginUrl();
+
+  await sendEmail({
+    from,
+    to: params.to,
+    subject: 'Welcome back to PropertyLA',
+    html: buildWelcomeBackHtml(params.name),
+    text: `Hi ${params.name || 'there'}, welcome back to PropertyLA. You can sign in here: ${loginUrl}`,
+  }, 'Property fit welcome back');
 };
 
 export const sendPropertyViewNotificationEmail = async (params: {
@@ -169,7 +303,7 @@ export const sendPropertyViewNotificationEmail = async (params: {
   const from = process.env.MAIL_FROM || 'PropertyLA <support@propertyla.com.my>';
   const leadName = params.leadName || 'A PropertyLA visitor';
 
-  await resend.emails.send({
+  await sendEmail({
     from,
     to: params.to,
     subject: `${leadName} viewed ${params.propertyTitle}`,
@@ -178,5 +312,5 @@ export const sendPropertyViewNotificationEmail = async (params: {
       <p>Email: ${params.leadEmail || 'Not provided'}<br/>Phone: ${params.leadPhone || 'Not provided'}</p>
       ${params.propertyUrl ? `<p><a href="${params.propertyUrl}">Open property</a></p>` : ''}`,
     text: `${leadName} viewed ${params.propertyTitle}. Email: ${params.leadEmail || 'Not provided'}, Phone: ${params.leadPhone || 'Not provided'}${params.propertyUrl ? `, Property: ${params.propertyUrl}` : ''}`,
-  });
+  }, 'Property view notification');
 };

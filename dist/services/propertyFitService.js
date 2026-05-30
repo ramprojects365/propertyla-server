@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import * as propertyRepository from '../repositories/propertyRepository.js';
 import * as userRepository from '../repositories/userRepository.js';
-import { sendPropertyFitListEmail, sendPropertyViewNotificationEmail } from './emailService.js';
+import { sendPropertyFitLeadPasswordEmail, sendPropertyFitWelcomeBackEmail, sendPropertyViewNotificationEmail } from './emailService.js';
 import * as notificationService from './notificationService.js';
 import { generateJWTToken } from './authService.js';
 import { AppError } from '../utils/errors.js';
@@ -77,23 +77,22 @@ const applyLooseFilters = (properties, filters) => {
     });
 };
 const getDisplayName = (contact) => {
-    return clean(contact?.name) || clean(contact?.email).split('@')[0] || 'PropertyLA user';
+    return clean(contact?.name) || clean(contact?.email).split('@')[0] || 'Property seeker';
 };
 const createLeadAccountIfNeeded = async (contact) => {
     const email = clean(contact?.email).toLowerCase();
     const phone = clean(contact?.phone);
     const name = getDisplayName(contact);
-    if (!email || !phone || !name) {
+    if (!email || !name) {
         return { created: false, user: null };
     }
     const existing = await userRepository.findUserByEmail(email);
     if (existing) {
-        const existingPhone = existing.phoneNumber || '';
-        const canLoginExistingLead = existing.userType === 'lead' && (!existingPhone || existingPhone === phone);
         return {
             created: false,
             user: existing,
-            token: canLoginExistingLead ? generateJWTToken(existing.id, existing.email) : null
+            token: null,
+            existingEmail: true
         };
     }
     const password = crypto.randomBytes(DEFAULT_PASSWORD_LENGTH).toString('base64url');
@@ -115,11 +114,34 @@ const createLeadAccountIfNeeded = async (contact) => {
         userType: 'lead',
         phoneNumber: phone
     });
+    const verifiedUser = await userRepository.updateUserEmailVerification(user.id);
     return {
         created: true,
-        user,
-        token: generateJWTToken(user.id, user.email)
+        user: verifiedUser,
+        token: generateJWTToken(verifiedUser.id, verifiedUser.email),
+        password
     };
+};
+const sendLeadAccountEmail = async (params) => {
+    try {
+        if (params.password) {
+            await sendPropertyFitLeadPasswordEmail({
+                to: params.email,
+                name: params.name,
+                password: params.password
+            });
+            return;
+        }
+        if (params.existingEmail) {
+            await sendPropertyFitWelcomeBackEmail({
+                to: params.email,
+                name: params.name
+            });
+        }
+    }
+    catch (error) {
+        console.error('Failed to send property fit lead email:', error);
+    }
 };
 export const getPropertyFitMatches = async (request) => {
     const answers = request.answers || {};
@@ -141,7 +163,7 @@ export const getPropertyFitMatches = async (request) => {
             maxPrice: filters.maxPrice
         });
     }
-    if (properties.length === 0) {
+    if (properties.length === 0 && !clean(answers.location)) {
         properties = await propertyRepository.findAllProperties({
             listingType: filters.listingType,
             minBedrooms: filters.minBedrooms,
@@ -149,27 +171,9 @@ export const getPropertyFitMatches = async (request) => {
         });
     }
     const exactMatchCount = properties.length;
-    let fallbackUsed = false;
-    if (properties.length === 0) {
-        properties = await propertyRepository.findAllProperties();
-        fallbackUsed = true;
-    }
+    const fallbackUsed = false;
     const limited = properties.slice(0, DEFAULT_MATCH_LIMIT);
     const lead = await createLeadAccountIfNeeded(request.contact);
-    if (clean(request.contact?.email) && limited.length > 0) {
-        try {
-            await sendPropertyFitListEmail(clean(request.contact?.email), getDisplayName(request.contact), limited.map((property) => ({
-                title: property.propertyName || property.title,
-                price: property.price,
-                location: buildLocation(property),
-                url: buildPropertyUrl(property.id),
-                imageUrl: getPropertyImageUrl(property)
-            })));
-        }
-        catch (error) {
-            console.error('Failed to send property fit list email:', error);
-        }
-    }
     const agentNotificationResults = await Promise.allSettled(limited.map((property) => notificationService.createPropertyFitMatchNotification({
         property,
         viewerName: getDisplayName(request.contact),
@@ -185,6 +189,8 @@ export const getPropertyFitMatches = async (request) => {
     return {
         autoRegistered: lead.created,
         autoLoggedIn: Boolean(lead.token),
+        existingEmailIgnored: Boolean(lead.existingEmail),
+        defaultPassword: lead.created ? lead.password : undefined,
         fallbackUsed,
         exactMatchCount,
         auth: lead.token && lead.user ? {
@@ -257,13 +263,21 @@ export const notifyPropertyViewed = async (request, options = {}) => {
 };
 export const createOrLoginPropertyFitLead = async (contact) => {
     const lead = await createLeadAccountIfNeeded(contact);
-    if (!lead.token || !lead.user) {
-        throw new AppError('This email is already registered. Please sign in with your account.', 409);
+    const email = clean(contact?.email).toLowerCase();
+    if (email && (lead.created || lead.existingEmail)) {
+        await sendLeadAccountEmail({
+            email,
+            name: getDisplayName(contact),
+            password: lead.created ? lead.password : undefined,
+            existingEmail: Boolean(lead.existingEmail)
+        });
     }
     return {
         autoRegistered: lead.created,
-        autoLoggedIn: true,
-        auth: {
+        autoLoggedIn: Boolean(lead.token),
+        existingEmailIgnored: Boolean(lead.existingEmail),
+        defaultPassword: lead.created ? lead.password : undefined,
+        auth: lead.token && lead.user ? {
             token: lead.token,
             user: {
                 id: lead.user.id,
@@ -274,7 +288,7 @@ export const createOrLoginPropertyFitLead = async (contact) => {
                 fullName: lead.user.fullName || getDisplayName(contact),
                 emailVerified: lead.user.emailVerified
             }
-        }
+        } : null
     };
 };
 //# sourceMappingURL=propertyFitService.js.map
