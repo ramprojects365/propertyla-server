@@ -7,6 +7,15 @@ type PropertyFitEmailItem = {
     imageUrl?: string;
 };
 export declare const sendPropertyFitListEmail: (to: string, name: string, properties: PropertyFitEmailItem[]) => Promise<void>;
+export declare const sendPropertyFitLeadPasswordEmail: (params: {
+    to: string;
+    name: string;
+    password: string;
+}) => Promise<void>;
+export declare const sendPropertyFitWelcomeBackEmail: (params: {
+    to: string;
+    name: string;
+}) => Promise<void>;
 export declare const sendPropertyViewNotificationEmail: (params: {
     to: string;
     agentName?: string | null;
