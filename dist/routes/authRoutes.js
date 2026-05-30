@@ -1,6 +1,6 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { register, login, getProfile, updateProfile, changePassword, verifyEmail, verifyOTP } from '../controllers/authController.js';
+import { register, login, getProfile, updateProfile, changePassword, forgotPassword, resetPassword, verifyEmail, verifyOTP } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 router.post('/register', [
@@ -74,5 +74,29 @@ const changePasswordValidation = [
 ];
 router.put('/change-password', authenticateToken, changePasswordValidation, changePassword);
 router.post('/change-password', authenticateToken, changePasswordValidation, changePassword);
+router.post('/forgot-password', [
+    body('email')
+        .trim()
+        .isEmail()
+        .withMessage('Invalid email address')
+        .normalizeEmail()
+], forgotPassword);
+router.post('/reset-password', [
+    body('token')
+        .notEmpty()
+        .withMessage('Reset token is required'),
+    body('newPassword')
+        .optional()
+        .isLength({ min: 8 })
+        .withMessage('New password must be at least 8 characters')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+        .withMessage('Password must contain uppercase, lowercase and number'),
+    body('new_password')
+        .optional()
+        .isLength({ min: 8 })
+        .withMessage('New password must be at least 8 characters')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+        .withMessage('Password must contain uppercase, lowercase and number')
+], resetPassword);
 export default router;
 //# sourceMappingURL=authRoutes.js.map

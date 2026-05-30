@@ -23,6 +23,10 @@ export declare const getUserProfile: (userId: string) => Promise<UserProfile>;
 export declare const updateUserProfile: (userId: string, updates: UpdateProfileData) => Promise<UserProfile>;
 export declare const uploadProfileImage: (userId: string, imageUrl: string) => Promise<UserProfile>;
 export declare const changePassword: (userId: string, oldPassword: string, newPassword: string) => Promise<void>;
+export declare const requestPasswordReset: (email: string) => Promise<{
+    emailQueued: boolean;
+}>;
+export declare const resetPasswordWithToken: (token: string, newPassword: string) => Promise<void>;
 export declare const validateToken: (userId: string) => Promise<UserProfile>;
 export declare const verifyOTP: (userId: string, code: string) => Promise<{
     userId: string;

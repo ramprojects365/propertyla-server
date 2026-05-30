@@ -132,6 +132,43 @@ export const verifyUserEmail = async (verificationToken: string): Promise<User |
   });
 };
 
+export const setPasswordResetToken = async (
+  userId: string,
+  resetToken: string,
+  resetExpiry: Date
+): Promise<void> => {
+  const repository = getUserRepository();
+
+  await repository.update(
+    { id: userId },
+    {
+      verificationToken: resetToken,
+      verificationExpiry: resetExpiry
+    }
+  );
+};
+
+export const findUserByResetToken = async (resetToken: string): Promise<User | null> => {
+  const repository = getUserRepository();
+
+  return await repository.findOne({
+    where: { verificationToken: resetToken },
+    select: ['id', 'email', 'username', 'verificationExpiry']
+  });
+};
+
+export const clearPasswordResetToken = async (userId: string): Promise<void> => {
+  const repository = getUserRepository();
+
+  await repository.update(
+    { id: userId },
+    {
+      verificationToken: null,
+      verificationExpiry: null
+    }
+  );
+};
+
 export const updateUserEmailVerification = async (userId: string): Promise<User> => {
   const repository = getUserRepository();
 

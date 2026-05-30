@@ -94,6 +94,27 @@ export const verifyUserEmail = async (verificationToken) => {
         select: ['id', 'verificationExpiry']
     });
 };
+export const setPasswordResetToken = async (userId, resetToken, resetExpiry) => {
+    const repository = getUserRepository();
+    await repository.update({ id: userId }, {
+        verificationToken: resetToken,
+        verificationExpiry: resetExpiry
+    });
+};
+export const findUserByResetToken = async (resetToken) => {
+    const repository = getUserRepository();
+    return await repository.findOne({
+        where: { verificationToken: resetToken },
+        select: ['id', 'email', 'username', 'verificationExpiry']
+    });
+};
+export const clearPasswordResetToken = async (userId) => {
+    const repository = getUserRepository();
+    await repository.update({ id: userId }, {
+        verificationToken: null,
+        verificationExpiry: null
+    });
+};
 export const updateUserEmailVerification = async (userId) => {
     const repository = getUserRepository();
     await repository.update({ id: userId }, {

@@ -3,9 +3,10 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import * as userRepository from '../repositories/userRepository.js';
 import { generateOTP } from '../utils/otp.js';
-import { sendOtpEmail } from './emailService.js';
+import { sendOtpEmail, sendPasswordResetEmail } from './emailService.js';
 const BCRYPT_SALT_ROUNDS = 10;
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
+const PASSWORD_RESET_TOKEN_EXPIRY_MINUTES = 60;
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
 const REN_NUMBER_PATTERN = /^(REN|PEA)\d{4,6}$/;
 const VERIFIED_REN_STATUS = 'verified';
@@ -22,6 +23,9 @@ export const generateJWTToken = (userId, email) => {
 };
 const calculateVerificationExpiry = () => {
     return new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+};
+const calculatePasswordResetExpiry = () => {
+    return new Date(Date.now() + PASSWORD_RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
 };
 const generateUsernameFromEmail = (email) => {
     const localPart = email.split('@')[0] || 'user';
@@ -270,6 +274,38 @@ export const changePassword = async (userId, oldPassword, newPassword) => {
     }
     const newPasswordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
     await userRepository.updatePassword(userId, newPasswordHash);
+};
+export const requestPasswordReset = async (email) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await userRepository.findUserByEmail(normalizedEmail);
+    if (!user) {
+        console.log('Password reset requested for non-existing email:', normalizedEmail);
+        return { emailQueued: false };
+    }
+    const resetToken = generateVerificationToken();
+    await userRepository.setPasswordResetToken(user.id, resetToken, calculatePasswordResetExpiry());
+    await sendPasswordResetEmail({
+        to: user.email,
+        username: user.username,
+        token: resetToken
+    });
+    return { emailQueued: true };
+};
+export const resetPasswordWithToken = async (token, newPassword) => {
+    if (!token) {
+        throw { status: 400, message: 'Reset token is required' };
+    }
+    const user = await userRepository.findUserByResetToken(token);
+    if (!user) {
+        throw { status: 400, message: 'Invalid or expired reset link' };
+    }
+    if (!user.verificationExpiry || new Date() > new Date(user.verificationExpiry)) {
+        await userRepository.clearPasswordResetToken(user.id);
+        throw { status: 400, message: 'Reset link has expired' };
+    }
+    const newPasswordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+    await userRepository.updatePassword(user.id, newPasswordHash);
+    await userRepository.clearPasswordResetToken(user.id);
 };
 export const validateToken = async (userId) => {
     const user = await userRepository.findUserById(userId);

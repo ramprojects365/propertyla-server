@@ -167,6 +167,64 @@ export const changePassword = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
+export const forgotPassword = async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            res.status(400).json({ success: false, errors: errors.array() });
+            return;
+        }
+        const { email } = req.body;
+        const result = await authService.requestPasswordReset(email);
+        const data = process.env.NODE_ENV === 'production'
+            ? undefined
+            : { emailQueued: result.emailQueued };
+        res.status(200).json({
+            success: true,
+            message: 'If that email is registered, a reset link has been sent.',
+            ...(data ? { data } : {})
+        });
+    }
+    catch (error) {
+        if (error.status) {
+            res.status(error.status).json({ success: false, message: error.message });
+            return;
+        }
+        console.error('Forgot password error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+export const resetPassword = async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            res.status(400).json({ success: false, errors: errors.array() });
+            return;
+        }
+        const token = req.body.token;
+        const newPassword = req.body.newPassword || req.body.new_password;
+        if (!newPassword) {
+            res.status(400).json({
+                success: false,
+                message: 'New password is required'
+            });
+            return;
+        }
+        await authService.resetPasswordWithToken(token, newPassword);
+        res.status(200).json({
+            success: true,
+            message: 'Password reset successfully'
+        });
+    }
+    catch (error) {
+        if (error.status) {
+            res.status(error.status).json({ success: false, message: error.message });
+            return;
+        }
+        console.error('Reset password error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
 export const verifyEmail = async (req, res) => {
     try {
         const { token } = req.body;
