@@ -176,9 +176,67 @@ const getClientLoginUrl = (): string => {
   const clientUrl =
     process.env.PUBLIC_CLIENT_URL ||
     process.env.CLIENT_URL ||
+    (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000') ||
     'https://www.propertyla.com.my';
 
   return `${clientUrl.replace(/\/$/, '')}/sign-in`;
+};
+
+const getClientResetPasswordUrl = (token: string): string => {
+  const clientUrl =
+    process.env.PUBLIC_CLIENT_URL ||
+    process.env.CLIENT_URL ||
+    (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000') ||
+    'https://www.propertyla.com.my';
+
+  return `${clientUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(token)}`;
+};
+
+const buildResetPasswordHtml = (username: string, resetUrl: string): string => {
+  return `<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;color:#222;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:32px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+            <tr>
+              <td style="background:#003b5c;padding:24px 32px;color:#ffffff;">
+                <h1 style="margin:0;font-size:22px;">PropertyLA</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <h2 style="margin:0 0 14px;font-size:20px;color:#111;">Reset your password</h2>
+                <p style="margin:0 0 16px;line-height:1.5;">Hi ${username || 'there'},</p>
+                <p style="margin:0 0 18px;line-height:1.5;">Use the button below to choose a new PropertyLA password. This link expires in 1 hour.</p>
+                <a href="${resetUrl}" style="display:inline-block;background:#003b5c;color:#ffffff;text-decoration:none;border-radius:6px;padding:11px 16px;font-size:14px;font-weight:700;">Reset password</a>
+                <p style="margin:18px 0 0;line-height:1.5;color:#555;font-size:14px;">If you did not request this, you can safely ignore this email.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+};
+
+export const sendPasswordResetEmail = async (params: {
+  to: string;
+  username: string;
+  token: string;
+}): Promise<void> => {
+  const from = process.env.MAIL_FROM || 'PropertyLA <support@propertyla.com.my>';
+  const resetUrl = getClientResetPasswordUrl(params.token);
+
+  await sendEmail({
+    from,
+    to: params.to,
+    subject: 'Reset your PropertyLA password',
+    html: buildResetPasswordHtml(params.username, resetUrl),
+    text: `Hi ${params.username || 'there'}, reset your PropertyLA password here: ${resetUrl}. This link expires in 1 hour.`,
+  }, 'Password reset');
 };
 
 const buildLeadAccountHtml = (params: {
