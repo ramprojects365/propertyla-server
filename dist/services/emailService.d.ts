@@ -30,5 +30,13 @@ export declare const sendPropertyViewNotificationEmail: (params: {
     propertyTitle: string;
     propertyUrl?: string;
 }) => Promise<void>;
+export declare const sendContactMessageEmail: (params: {
+    name: string;
+    email: string;
+    phone: string;
+    subject?: string;
+    message: string;
+    source?: string;
+}) => Promise<void>;
 export {};
 //# sourceMappingURL=emailService.d.ts.map

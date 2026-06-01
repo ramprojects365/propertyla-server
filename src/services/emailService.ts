@@ -15,6 +15,14 @@ const sendEmail = async (
   console.log(`${label} email sent:`, result.data?.id || 'accepted');
 };
 
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 const buildOtpEmailHtml = (username: string, otp: string): string => {
   return `<!DOCTYPE html>
 <html>
@@ -371,4 +379,46 @@ export const sendPropertyViewNotificationEmail = async (params: {
       ${params.propertyUrl ? `<p><a href="${params.propertyUrl}">Open property</a></p>` : ''}`,
     text: `${leadName} viewed ${params.propertyTitle}. Email: ${params.leadEmail || 'Not provided'}, Phone: ${params.leadPhone || 'Not provided'}${params.propertyUrl ? `, Property: ${params.propertyUrl}` : ''}`,
   }, 'Property view notification');
+};
+
+export const sendContactMessageEmail = async (params: {
+  name: string;
+  email: string;
+  phone: string;
+  subject?: string;
+  message: string;
+  source?: string;
+}): Promise<void> => {
+  const from = process.env.MAIL_FROM || 'PropertyLA <support@propertyla.com.my>';
+  const to = process.env.CONTACT_TO_EMAIL || process.env.MAIL_TO || 'support@propertyla.com.my';
+  const subject = params.subject?.trim() || 'New PropertyLA contact message';
+  const safe = {
+    name: escapeHtml(params.name),
+    email: escapeHtml(params.email),
+    phone: escapeHtml(params.phone),
+    subject: escapeHtml(subject),
+    message: escapeHtml(params.message),
+    source: escapeHtml(params.source || 'Website contact form'),
+  };
+
+  await sendEmail({
+    from,
+    to,
+    replyTo: params.email,
+    subject: `PropertyLA contact: ${subject}`,
+    html: `<p><strong>Source:</strong> ${safe.source}</p>
+      <p><strong>Name:</strong> ${safe.name}</p>
+      <p><strong>Email:</strong> ${safe.email}</p>
+      <p><strong>Phone:</strong> ${safe.phone}</p>
+      <p><strong>Subject:</strong> ${safe.subject}</p>
+      <p><strong>Message:</strong></p>
+      <p style="white-space:pre-line;">${safe.message}</p>`,
+    text: `Source: ${params.source || 'Website contact form'}
+Name: ${params.name}
+Email: ${params.email}
+Phone: ${params.phone}
+Subject: ${subject}
+
+${params.message}`,
+  }, 'Contact message');
 };

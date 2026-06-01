@@ -10,6 +10,7 @@ import imageUploadRoutes from './routes/imageUploadRoutes.js';
 import uploadsRoutes from './routes/uploadsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
 import { initializeDatabase } from './config/database.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,6 +68,9 @@ app.get('/', (req, res) => {
                 markRead: 'PATCH /api/notifications/:id/read (requires auth)',
                 markAllRead: 'PATCH /api/notifications/read-all (requires auth)'
             },
+            contact: {
+                send: 'POST /api/contact'
+            },
             images: {
                 uploadMultiple: 'POST /api/images/upload-multiple (requires auth, max 15 images)',
                 uploadSingle: 'POST /api/images/upload-single',
@@ -83,6 +87,7 @@ app.use('/api/images', imageUploadRoutes);
 app.use('/api/uploads', uploadsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/contact', contactRoutes);
 app.use((req, res) => {
     console.log('Route not found:', req.method, req.originalUrl);
     res.status(404).json({
