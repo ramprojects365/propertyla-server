@@ -8,8 +8,43 @@ import { generateJWTToken } from './authService.js';
 import { AppError } from '../utils/errors.js';
 const DEFAULT_PASSWORD_LENGTH = 18;
 const DEFAULT_MATCH_LIMIT = 12;
+const EMAIL_PATTERN = /^[^\s@]+@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
+const NAME_PATTERN = /^(?![0-9])(?=.*[A-Za-z])[A-Za-z\s.'-]{2,60}$/;
 const clean = (value) => {
     return typeof value === 'string' ? value.trim() : '';
+};
+const normalizeMalaysiaPhone = (value) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.startsWith('60'))
+        return `0${digits.slice(2)}`;
+    return digits;
+};
+const isValidMalaysiaPhone = (value) => {
+    const normalized = normalizeMalaysiaPhone(value);
+    return /^0(?:1(?:1\d{8}|[02-46-9]\d{7,8})|3\d{8}|[4-9]\d{7,8})$/.test(normalized);
+};
+const validateContact = (contact) => {
+    if (!contact)
+        return;
+    const name = clean(contact.name);
+    const email = clean(contact.email);
+    const phone = clean(contact.phone);
+    const hasAnyContact = Boolean(email || phone);
+    if (name && !NAME_PATTERN.test(name)) {
+        throw new AppError('Enter a valid name', 400);
+    }
+    if (hasAnyContact && !phone) {
+        throw new AppError('Enter your phone number', 400);
+    }
+    if (hasAnyContact && !email) {
+        throw new AppError('Enter your email address', 400);
+    }
+    if (email && !EMAIL_PATTERN.test(email)) {
+        throw new AppError('Enter a valid email address', 400);
+    }
+    if (phone && !isValidMalaysiaPhone(phone)) {
+        throw new AppError('Enter a valid Malaysia phone number', 400);
+    }
 };
 const parseBedrooms = (value) => {
     const parsed = parseInt(clean(value), 10);
@@ -144,6 +179,7 @@ const sendLeadAccountEmail = async (params) => {
     }
 };
 export const getPropertyFitMatches = async (request) => {
+    validateContact(request.contact);
     const answers = request.answers || {};
     const maxPrice = parseBudgetAmount(answers.budgetAmount);
     const filters = {
@@ -212,6 +248,7 @@ export const getPropertyFitMatches = async (request) => {
     };
 };
 export const notifyPropertyViewed = async (request, options = {}) => {
+    validateContact(request.contact);
     const propertyId = clean(request.propertyId);
     if (!propertyId) {
         throw new AppError('Property ID is required', 400);
@@ -262,6 +299,7 @@ export const notifyPropertyViewed = async (request, options = {}) => {
     };
 };
 export const createOrLoginPropertyFitLead = async (contact) => {
+    validateContact(contact);
     const lead = await createLeadAccountIfNeeded(contact);
     const email = clean(contact?.email).toLowerCase();
     if (email && (lead.created || lead.existingEmail)) {
