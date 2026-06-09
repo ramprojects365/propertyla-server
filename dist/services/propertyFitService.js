@@ -43,7 +43,7 @@ const validateContact = (contact) => {
         throw new AppError('Enter a valid email address', 400);
     }
     if (phone && !isValidMalaysiaPhone(phone)) {
-        throw new AppError('Enter a valid Malaysia phone number', 400);
+        throw new AppError('Enter a valid phone number', 400);
     }
 };
 const parseBedrooms = (value) => {
