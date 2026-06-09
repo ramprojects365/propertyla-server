@@ -84,7 +84,7 @@ const validateContact = (contact?: AdvisorContact): void => {
   }
 
   if (phone && !isValidMalaysiaPhone(phone)) {
-    throw new AppError('Enter a valid Malaysia phone number', 400);
+    throw new AppError('Enter a valid phone number', 400);
   }
 };
 
