@@ -62,14 +62,9 @@ const isValidMalaysiaPhone = (value: string): boolean => {
 const validateContact = (contact?: AdvisorContact): void => {
   if (!contact) return;
 
-  const name = clean(contact.name);
   const email = clean(contact.email);
   const phone = clean(contact.phone);
   const hasAnyContact = Boolean(email || phone);
-
-  if (name && !NAME_PATTERN.test(name)) {
-    throw new AppError('Enter a valid name', 400);
-  }
 
   if (hasAnyContact && !phone) {
     throw new AppError('Enter your phone number', 400);
@@ -170,7 +165,8 @@ const applyLooseFilters = (
 };
 
 const getDisplayName = (contact?: AdvisorContact): string => {
-  return clean(contact?.name) || clean(contact?.email).split('@')[0] || 'Property seeker';
+  const name = clean(contact?.name);
+  return (NAME_PATTERN.test(name) ? name : '') || clean(contact?.email).split('@')[0] || 'Property seeker';
 };
 
 const createLeadAccountIfNeeded = async (contact?: AdvisorContact) => {

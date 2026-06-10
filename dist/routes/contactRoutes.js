@@ -16,7 +16,7 @@ router.post('/', async (req, res) => {
     const subject = clean(req.body?.subject);
     const message = clean(req.body?.message);
     const source = clean(req.body?.source);
-    if (!namePattern.test(name)) {
+    if (name && !namePattern.test(name)) {
         res.status(400).json({ success: false, message: 'Enter a valid name' });
         return;
     }
@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
     }
     try {
         await sendContactMessageEmail({
-            name,
+            name: name || email.split('@')[0] || 'Website visitor',
             email,
             phone,
             subject,
