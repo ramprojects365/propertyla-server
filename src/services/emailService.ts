@@ -131,6 +131,12 @@ const buildPropertyFitListHtml = (
       </tr>`;
     })
     .join('');
+  const resultsContent = propertyRows || `<tr>
+        <td style="padding:14px 0;border-bottom:1px solid #e8eef3;">
+          <strong style="display:block;color:#111;margin-bottom:4px;">No exact matches yet</strong>
+          <span style="display:block;color:#555;font-size:14px;">Our team can still help you with this search.</span>
+        </td>
+      </tr>`;
 
   return `<!DOCTYPE html>
 <html>
@@ -148,7 +154,7 @@ const buildPropertyFitListHtml = (
               <td style="padding:32px;">
                 <h2 style="margin:0 0 14px;font-size:20px;color:#111;">Your property matches</h2>
                 <p style="margin:0 0 18px;line-height:1.5;">Hi ${name || 'there'}, here are the properties matched from your Property Fit answers.</p>
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${propertyRows}</table>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${resultsContent}</table>
                 <p style="margin:20px 0 0;line-height:1.5;color:#555;font-size:14px;">When you open or view a property, the assigned agent may be notified so they can follow up.</p>
               </td>
             </tr>
@@ -165,18 +171,19 @@ export const sendPropertyFitListEmail = async (
   name: string,
   properties: PropertyFitEmailItem[]
 ): Promise<void> => {
-  if (!properties.length) return;
-
   const from = process.env.MAIL_FROM || 'PropertyLA <support@propertyla.com.my>';
+  const propertyText = properties.length
+    ? properties
+      .map((property) => `- ${property.title} | ${formatPrice(property.price)} | ${property.location || 'Location pending'}${property.url ? ` | ${property.url}` : ''}`)
+      .join('\n')
+    : 'No exact matches yet. Our team can still help you with this search.';
 
   await sendEmail({
     from,
     to,
     subject: 'Your PropertyLA property matches',
     html: buildPropertyFitListHtml(name, properties),
-    text: `Hi ${name || 'there'}, your PropertyLA matches:\n\n${properties
-      .map((property) => `- ${property.title} | ${formatPrice(property.price)} | ${property.location || 'Location pending'}${property.url ? ` | ${property.url}` : ''}`)
-      .join('\n')}`,
+    text: `Hi ${name || 'there'}, your PropertyLA matches:\n\n${propertyText}`,
   }, 'Property fit list');
 };
 

@@ -179,6 +179,11 @@ const sendLeadAccountEmail = async (params) => {
     }
 };
 const sendPropertyFitMatchEmail = async (params) => {
+    const status = {
+        attempted: true,
+        passwordEmailSent: false,
+        resultsEmailSent: false
+    };
     try {
         if (params.password) {
             await sendPropertyFitLeadPasswordEmail({
@@ -186,12 +191,16 @@ const sendPropertyFitMatchEmail = async (params) => {
                 name: params.name,
                 password: params.password
             });
+            status.passwordEmailSent = true;
         }
         await sendPropertyFitListEmail(params.email, params.name, mapPropertiesForEmail(params.properties));
+        status.resultsEmailSent = true;
     }
     catch (error) {
         console.error('Failed to send property fit match email:', error);
+        status.error = error instanceof Error ? error.message : 'Failed to send property fit email';
     }
+    return status;
 };
 export const getPropertyFitMatches = async (request) => {
     validateContact(request.contact);
@@ -226,8 +235,13 @@ export const getPropertyFitMatches = async (request) => {
     const limited = properties.slice(0, DEFAULT_MATCH_LIMIT);
     const lead = await createLeadAccountIfNeeded(request.contact);
     const email = clean(request.contact?.email).toLowerCase();
+    let emailDelivery = {
+        attempted: false,
+        passwordEmailSent: false,
+        resultsEmailSent: false
+    };
     if (email) {
-        await sendPropertyFitMatchEmail({
+        emailDelivery = await sendPropertyFitMatchEmail({
             email,
             name: getDisplayName(request.contact),
             properties: limited,
@@ -266,6 +280,7 @@ export const getPropertyFitMatches = async (request) => {
             }
         } : null,
         leadUserId: lead.user?.id,
+        emailDelivery,
         agentNotificationCount,
         count: limited.length,
         data: limited

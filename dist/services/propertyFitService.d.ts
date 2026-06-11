@@ -20,6 +20,12 @@ type PropertyViewRequest = {
     contact?: AdvisorContact;
     propertyUrl?: string;
 };
+type EmailDeliveryStatus = {
+    attempted: boolean;
+    passwordEmailSent: boolean;
+    resultsEmailSent: boolean;
+    error?: string;
+};
 export declare const getPropertyFitMatches: (request: PropertyFitRequest) => Promise<{
     autoRegistered: boolean;
     autoLoggedIn: boolean;
@@ -40,6 +46,7 @@ export declare const getPropertyFitMatches: (request: PropertyFitRequest) => Pro
         };
     } | null;
     leadUserId: string | undefined;
+    emailDelivery: EmailDeliveryStatus;
     agentNotificationCount: number;
     count: number;
     data: Property[];
