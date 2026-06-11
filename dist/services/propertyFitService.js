@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import * as propertyRepository from '../repositories/propertyRepository.js';
 import * as userRepository from '../repositories/userRepository.js';
-import { sendPropertyFitLeadPasswordEmail, sendPropertyFitWelcomeBackEmail, sendPropertyViewNotificationEmail } from './emailService.js';
+import { sendPropertyFitLeadPasswordEmail, sendPropertyFitListEmail, sendPropertyViewNotificationEmail } from './emailService.js';
 import * as notificationService from './notificationService.js';
 import { generateJWTToken } from './authService.js';
 import { AppError } from '../utils/errors.js';
@@ -96,6 +96,15 @@ const getPropertyImageUrl = (property) => {
     }
     return undefined;
 };
+const mapPropertiesForEmail = (properties) => {
+    return properties.map((property) => ({
+        title: property.propertyName || property.title || 'PropertyLA listing',
+        price: property.price,
+        location: buildLocation(property),
+        url: buildPropertyUrl(property.id),
+        imageUrl: getPropertyImageUrl(property)
+    }));
+};
 const applyLooseFilters = (properties, filters) => {
     return properties.filter((property) => {
         if (filters.minBedrooms !== undefined && Number(property.bedrooms || 0) < filters.minBedrooms) {
@@ -164,15 +173,24 @@ const sendLeadAccountEmail = async (params) => {
             });
             return;
         }
-        if (params.existingEmail) {
-            await sendPropertyFitWelcomeBackEmail({
-                to: params.email,
-                name: params.name
-            });
-        }
     }
     catch (error) {
         console.error('Failed to send property fit lead email:', error);
+    }
+};
+const sendPropertyFitMatchEmail = async (params) => {
+    try {
+        if (params.password) {
+            await sendPropertyFitLeadPasswordEmail({
+                to: params.email,
+                name: params.name,
+                password: params.password
+            });
+        }
+        await sendPropertyFitListEmail(params.email, params.name, mapPropertiesForEmail(params.properties));
+    }
+    catch (error) {
+        console.error('Failed to send property fit match email:', error);
     }
 };
 export const getPropertyFitMatches = async (request) => {
@@ -207,6 +225,15 @@ export const getPropertyFitMatches = async (request) => {
     const fallbackUsed = false;
     const limited = properties.slice(0, DEFAULT_MATCH_LIMIT);
     const lead = await createLeadAccountIfNeeded(request.contact);
+    const email = clean(request.contact?.email).toLowerCase();
+    if (email) {
+        await sendPropertyFitMatchEmail({
+            email,
+            name: getDisplayName(request.contact),
+            properties: limited,
+            password: lead.created ? lead.password : undefined
+        });
+    }
     const agentNotificationResults = await Promise.allSettled(limited.map((property) => notificationService.createPropertyFitMatchNotification({
         property,
         viewerName: getDisplayName(request.contact),
@@ -299,12 +326,11 @@ export const createOrLoginPropertyFitLead = async (contact) => {
     validateContact(contact);
     const lead = await createLeadAccountIfNeeded(contact);
     const email = clean(contact?.email).toLowerCase();
-    if (email && (lead.created || lead.existingEmail)) {
+    if (email && lead.created) {
         await sendLeadAccountEmail({
             email,
             name: getDisplayName(contact),
-            password: lead.created ? lead.password : undefined,
-            existingEmail: Boolean(lead.existingEmail)
+            password: lead.password
         });
     }
     return {
