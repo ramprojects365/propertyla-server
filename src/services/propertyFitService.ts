@@ -37,6 +37,13 @@ type PropertyViewRequest = {
   propertyUrl?: string;
 };
 
+type EmailDeliveryStatus = {
+  attempted: boolean;
+  passwordEmailSent: boolean;
+  resultsEmailSent: boolean;
+  error?: string;
+};
+
 const DEFAULT_PASSWORD_LENGTH = 18;
 const DEFAULT_MATCH_LIMIT = 12;
 const EMAIL_PATTERN = /^[^\s@]+@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
@@ -254,7 +261,13 @@ const sendPropertyFitMatchEmail = async (params: {
   name: string;
   properties: Property[];
   password?: string;
-}) => {
+}): Promise<EmailDeliveryStatus> => {
+  const status: EmailDeliveryStatus = {
+    attempted: true,
+    passwordEmailSent: false,
+    resultsEmailSent: false
+  };
+
   try {
     if (params.password) {
       await sendPropertyFitLeadPasswordEmail({
@@ -262,6 +275,7 @@ const sendPropertyFitMatchEmail = async (params: {
         name: params.name,
         password: params.password
       });
+      status.passwordEmailSent = true;
     }
 
     await sendPropertyFitListEmail(
@@ -269,9 +283,13 @@ const sendPropertyFitMatchEmail = async (params: {
       params.name,
       mapPropertiesForEmail(params.properties)
     );
+    status.resultsEmailSent = true;
   } catch (error) {
     console.error('Failed to send property fit match email:', error);
+    status.error = error instanceof Error ? error.message : 'Failed to send property fit email';
   }
+
+  return status;
 };
 
 export const getPropertyFitMatches = async (request: PropertyFitRequest) => {
@@ -313,9 +331,14 @@ export const getPropertyFitMatches = async (request: PropertyFitRequest) => {
   const limited = properties.slice(0, DEFAULT_MATCH_LIMIT);
   const lead = await createLeadAccountIfNeeded(request.contact);
   const email = clean(request.contact?.email).toLowerCase();
+  let emailDelivery: EmailDeliveryStatus = {
+    attempted: false,
+    passwordEmailSent: false,
+    resultsEmailSent: false
+  };
 
   if (email) {
-    await sendPropertyFitMatchEmail({
+    emailDelivery = await sendPropertyFitMatchEmail({
       email,
       name: getDisplayName(request.contact),
       properties: limited,
@@ -363,6 +386,7 @@ export const getPropertyFitMatches = async (request: PropertyFitRequest) => {
       }
     } : null,
     leadUserId: lead.user?.id,
+    emailDelivery,
     agentNotificationCount,
     count: limited.length,
     data: limited
