@@ -181,6 +181,34 @@ const applyLooseFilters = (
   });
 };
 
+const rankClosestProperties = (
+  properties: Property[],
+  filters: { location?: string; minBedrooms?: number; maxPrice?: number }
+): Property[] => {
+  const location = clean(filters.location).toLowerCase();
+
+  return [...properties].sort((left, right) => {
+    const score = (property: Property): number => {
+      let value = 0;
+      const propertyLocation = buildLocation(property).toLowerCase();
+      const bedrooms = Number(property.bedrooms || 0);
+      const price = Number(property.price || 0);
+
+      if (location && propertyLocation.includes(location)) value += 6;
+      if (filters.minBedrooms !== undefined) {
+        value += bedrooms >= filters.minBedrooms ? 3 : Math.max(0, 2 - (filters.minBedrooms - bedrooms));
+      }
+      if (filters.maxPrice !== undefined && price > 0) {
+        value += price <= filters.maxPrice ? 4 : Math.max(0, 3 - ((price - filters.maxPrice) / filters.maxPrice));
+      }
+
+      return value;
+    };
+
+    return score(right) - score(left);
+  });
+};
+
 const getDisplayName = (contact?: AdvisorContact): string => {
   const name = clean(contact?.name);
   return (NAME_PATTERN.test(name) ? name : '') || clean(contact?.email).split('@')[0] || 'Property seeker';
@@ -326,7 +354,19 @@ export const getPropertyFitMatches = async (request: PropertyFitRequest) => {
   }
 
   const exactMatchCount = properties.length;
-  const fallbackUsed = false;
+  let fallbackUsed = false;
+
+  if (properties.length === 0 && filters.listingType) {
+    const sameListingType = await propertyRepository.findAllProperties({
+      listingType: filters.listingType
+    });
+    properties = rankClosestProperties(sameListingType, {
+      location: answers.location,
+      minBedrooms: filters.minBedrooms,
+      maxPrice: filters.maxPrice
+    });
+    fallbackUsed = properties.length > 0;
+  }
 
   const limited = properties.slice(0, DEFAULT_MATCH_LIMIT);
   const lead = await createLeadAccountIfNeeded(request.contact);
