@@ -368,12 +368,12 @@ export const getPropertyFitMatches = async (request: PropertyFitRequest) => {
 
   return {
     autoRegistered: lead.created,
-    autoLoggedIn: Boolean(lead.token),
+    autoLoggedIn: Boolean(lead.created && lead.token),
     existingEmailIgnored: Boolean(lead.existingEmail),
     defaultPassword: lead.created ? lead.password : undefined,
     fallbackUsed,
     exactMatchCount,
-    auth: lead.token && lead.user ? {
+    auth: lead.created && lead.token && lead.user ? {
       token: lead.token,
       user: {
         id: lead.user.id,
@@ -470,10 +470,10 @@ export const createOrLoginPropertyFitLead = async (contact?: AdvisorContact) => 
 
   return {
     autoRegistered: lead.created,
-    autoLoggedIn: Boolean(lead.token),
+    autoLoggedIn: Boolean(lead.created && lead.token),
     existingEmailIgnored: Boolean(lead.existingEmail),
     defaultPassword: lead.created ? lead.password : undefined,
-    auth: lead.token && lead.user ? {
+    auth: lead.created && lead.token && lead.user ? {
       token: lead.token,
       user: {
         id: lead.user.id,
