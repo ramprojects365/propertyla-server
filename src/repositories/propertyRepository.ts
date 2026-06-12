@@ -114,9 +114,10 @@ export const findAllProperties = async (filters?: PropertyFilters): Promise<Prop
     }
 
     if (filters.cityName) {
-      queryBuilder.andWhere('property.cityName ILIKE :cityName', {
-        cityName: `%${filters.cityName}%`
-      });
+      queryBuilder.andWhere(
+        '(property.cityName ILIKE :location OR property.state ILIKE :location OR property.streetName ILIKE :location OR property.landmark ILIKE :location OR property.propertyName ILIKE :location)',
+        { location: `%${filters.cityName}%` }
+      );
     }
 
     if (filters.state) {
