@@ -43,7 +43,7 @@ const buildOtpEmailHtml = (username: string, otp: string): string => {
             <tr>
               <td style="padding:32px;">
                 <h2 style="margin:0 0 16px;font-size:20px;color:#111;">Verify your email</h2>
-                <p style="margin:0 0 16px;line-height:1.5;">Hi,</p>
+                <p style="margin:0 0 16px;line-height:1.5;">Hi ${username},</p>
                 <p style="margin:0 0 24px;line-height:1.5;">
                   Thanks for signing up. Use the one-time code below to verify your email address and activate your account.
                 </p>
@@ -83,7 +83,7 @@ export const sendOtpEmail = async (
     to,
     subject: "Your PropertyLa verification code",
     html: buildOtpEmailHtml(username, otp),
-    text: `Hi, your OTP is ${otp}`,
+    text: `Hi ${username}, your OTP is ${otp}`,
   }, 'OTP');
 };
 
@@ -223,7 +223,7 @@ const buildResetPasswordHtml = (username: string, resetUrl: string): string => {
             <tr>
               <td style="padding:32px;">
                 <h2 style="margin:0 0 14px;font-size:20px;color:#111;">Reset your password</h2>
-                <p style="margin:0 0 16px;line-height:1.5;">Hi,</p>
+                <p style="margin:0 0 16px;line-height:1.5;">Hi ${username || 'there'},</p>
                 <p style="margin:0 0 18px;line-height:1.5;">Use the button below to choose a new PropertyLa password. This link expires in 1 hour.</p>
                 <a href="${resetUrl}" style="display:inline-block;background:#003b5c;color:#ffffff;text-decoration:none;border-radius:6px;padding:11px 16px;font-size:14px;font-weight:700;">Reset password</a>
                 <p style="margin:18px 0 0;line-height:1.5;color:#555;font-size:14px;">If you did not request this, you can safely ignore this email.</p>
@@ -250,7 +250,7 @@ export const sendPasswordResetEmail = async (params: {
     to: params.to,
     subject: 'Reset your PropertyLa password',
     html: buildResetPasswordHtml(params.username, resetUrl),
-    text: `Hi, reset your PropertyLa password here: ${resetUrl}. This link expires in 1 hour.`,
+    text: `Hi ${params.username || 'there'}, reset your PropertyLa password here: ${resetUrl}. This link expires in 1 hour.`,
   }, 'Password reset');
 };
 
@@ -380,7 +380,7 @@ export const sendPropertyViewNotificationEmail = async (params: {
     from,
     to: params.to,
     subject: `${leadName} viewed ${params.propertyTitle}`,
-    html: `<p>Hi,</p>
+    html: `<p>Hi ${params.agentName || 'agent'},</p>
       <p>${leadName} viewed or clicked <strong>${params.propertyTitle}</strong> from Property Fit.</p>
       <p>Email: ${params.leadEmail || 'Not provided'}<br/>Phone: ${params.leadPhone || 'Not provided'}</p>
       ${params.propertyUrl ? `<p><a href="${params.propertyUrl}">Open property</a></p>` : ''}`,
