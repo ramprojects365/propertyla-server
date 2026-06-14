@@ -98,7 +98,7 @@ const getPropertyImageUrl = (property) => {
 };
 const mapPropertiesForEmail = (properties) => {
     return properties.map((property) => ({
-        title: property.propertyName || property.title || 'PropertyLA listing',
+        title: property.propertyName || property.title || 'PropertyLa listing',
         price: property.price,
         location: buildLocation(property),
         url: buildPropertyUrl(property.id),
@@ -114,6 +114,27 @@ const applyLooseFilters = (properties, filters) => {
             return false;
         }
         return true;
+    });
+};
+const rankClosestProperties = (properties, filters) => {
+    const location = clean(filters.location).toLowerCase();
+    return [...properties].sort((left, right) => {
+        const score = (property) => {
+            let value = 0;
+            const propertyLocation = buildLocation(property).toLowerCase();
+            const bedrooms = Number(property.bedrooms || 0);
+            const price = Number(property.price || 0);
+            if (location && propertyLocation.includes(location))
+                value += 6;
+            if (filters.minBedrooms !== undefined) {
+                value += bedrooms >= filters.minBedrooms ? 3 : Math.max(0, 2 - (filters.minBedrooms - bedrooms));
+            }
+            if (filters.maxPrice !== undefined && price > 0) {
+                value += price <= filters.maxPrice ? 4 : Math.max(0, 3 - ((price - filters.maxPrice) / filters.maxPrice));
+            }
+            return value;
+        };
+        return score(right) - score(left);
     });
 };
 const getDisplayName = (contact) => {
@@ -231,7 +252,18 @@ export const getPropertyFitMatches = async (request) => {
         });
     }
     const exactMatchCount = properties.length;
-    const fallbackUsed = false;
+    let fallbackUsed = false;
+    if (properties.length === 0 && filters.listingType) {
+        const sameListingType = await propertyRepository.findAllProperties({
+            listingType: filters.listingType
+        });
+        properties = rankClosestProperties(sameListingType, {
+            location: answers.location,
+            minBedrooms: filters.minBedrooms,
+            maxPrice: filters.maxPrice
+        });
+        fallbackUsed = properties.length > 0;
+    }
     const limited = properties.slice(0, DEFAULT_MATCH_LIMIT);
     const lead = await createLeadAccountIfNeeded(request.contact);
     const email = clean(request.contact?.email).toLowerCase();

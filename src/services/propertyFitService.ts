@@ -156,7 +156,7 @@ const getPropertyImageUrl = (property: Property): string | undefined => {
 
 const mapPropertiesForEmail = (properties: Property[]) => {
   return properties.map((property) => ({
-    title: property.propertyName || property.title || 'PropertyLA listing',
+    title: property.propertyName || property.title || 'PropertyLa listing',
     price: property.price,
     location: buildLocation(property),
     url: buildPropertyUrl(property.id),
